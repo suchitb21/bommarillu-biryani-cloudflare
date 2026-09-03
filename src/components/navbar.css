@@ -1,0 +1,123 @@
+/* ===================== NAVBAR ===================== */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem clamp(1.25rem, 5vw, 4.5rem);
+  position: sticky;
+  top: 0;
+  background: var(--cream);
+  z-index: 50;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+.logo-icon {
+  width: clamp(38px, 4vw, 46px);
+  height: clamp(38px, 4vw, 46px);
+  border-radius: 50%;
+  background: var(--brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.logo-icon svg {
+  width: 58%;
+  height: 58%;
+}
+.logo-text {
+  line-height: 1;
+}
+.logo-name {
+  font-weight: 800;
+  font-size: clamp(1.15rem, 1.7vw, 1.5rem);
+  color: var(--brown);
+  display: block;
+}
+.logo-sub {
+  font-weight: 700;
+  font-size: clamp(0.6rem, 0.8vw, 0.7rem);
+  color: var(--orange-dark);
+  letter-spacing: 3px;
+  display: block;
+  margin-top: 2px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--brown-soft);
+  font-weight: 500;
+  font-size: 1rem;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+.nav-links a:hover {
+  color: var(--orange);
+}
+.btn-pill {
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  padding: 0.85rem 1.9rem;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-family: var(--font-poppins), sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 8px 18px rgba(240, 130, 30, 0.35);
+  transition: transform 0.15s;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-pill:hover {
+  transform: translateY(-2px);
+}
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.hamburger span {
+  width: 26px;
+  height: 3px;
+  background: var(--brown);
+  border-radius: 2px;
+}
+
+@media (max-width: 900px) {
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--cream);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.5rem clamp(1.25rem, 5vw, 4.5rem) 2rem;
+    box-shadow: 0 12px 20px rgba(59, 36, 23, 0.08);
+    display: none;
+  }
+  .nav-links.open {
+    display: flex;
+  }
+  .nav-links .btn-pill {
+    width: 100%;
+    text-align: center;
+  }
+  .hamburger {
+    display: flex;
+  }
+}

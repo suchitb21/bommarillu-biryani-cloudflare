@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(git --version)",
+      "Bash(npx --yes create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(cd \"C:\\\\Users\\\\kukre\\\\Projects\\\\bom\" && rm -rf .git && ls -la .git 2>&1)",
+      "Bash(npx --yes shadcn@latest init -y -b new-york --force)",
+      "Bash(npx --yes shadcn@latest init --help)",
+      "Bash(npx --yes shadcn@latest --version)",
+      "Bash(npx --yes shadcn@2.3.0 init --help)",
+      "Bash(npx --yes shadcn@latest init -y -f)",
+      "Bash(npx --yes shadcn@latest init -y -b radix -f)",
+      "Bash(npx --yes shadcn@latest init -y -b radix -p radix-nova -f)",
+      "Bash(npx --yes shadcn@latest init -y -b radix -p nova -f)",
+      "Bash(npx --yes tsc --noEmit)",
+      "Bash(ls -la \"C:\\\\Users\\\\kukre\\\\Documents\\\\bommarillu-biryani\" 2>&1)",
+      "Bash(cp \"C:\\\\Users\\\\kukre\\\\Documents\\\\bommarillu-biryani\\\\biryani.png\" \"C:\\\\Users\\\\kukre\\\\Projects\\\\bom\\\\public\\\\images\\\\biryani.png\")",
+      "Bash(cp \"C:\\\\Users\\\\kukre\\\\Documents\\\\bommarillu-biryani\\\\biryani-kadhai.jpg\" \"C:\\\\Users\\\\kukre\\\\Projects\\\\bom\\\\public\\\\images\\\\biryani-kadhai.jpg\")",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)"
+    ]
+  }
+}

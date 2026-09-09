@@ -9,6 +9,7 @@ import {
 } from "@/lib/time-slots";
 import type { CheckoutAddress, FulfillmentMethod } from "@/lib/checkout/types";
 import { computeSalesTaxCents, SALES_TAX_NAME, SALES_TAX_PERCENT } from "@/lib/checkout/tax";
+import { CATERING_DELIVERY_FEE_CENTS, CATERING_DELIVERY_FEE_NAME } from "@/lib/checkout/delivery-fee";
 
 export type CheckoutFormValues = {
   name: string;
@@ -73,7 +74,13 @@ export function CheckoutForm({
   // Sales tax is computed here from the same constant the server attaches to
   // the Square order, so Square charges exactly what this form shows.
   const salesTaxCents = computeSalesTaxCents(totalCents);
-  const grandTotalCents = totalCents + salesTaxCents;
+
+  // Catering "delivery" carries a flat NON-TAXABLE $100 delivery fee - shown
+  // as its own row and kept OUT of the tax base, matching the order service
+  // charge Square receives (`taxable: false`).
+  const hasDeliveryFee = showEventDate && fulfillmentMethod === "delivery";
+  const deliveryFeeCents = hasDeliveryFee ? CATERING_DELIVERY_FEE_CENTS : 0;
+  const grandTotalCents = totalCents + salesTaxCents + deliveryFeeCents;
 
   const dateForSlots = showEventDate ? eventDate : todayInRestaurantTimeZone();
   const slots = useMemo(
@@ -312,6 +319,14 @@ export function CheckoutForm({
           <span>Subtotal</span>
           <span>{formatMoney(totalCents)}</span>
         </div>
+        {hasDeliveryFee ? (
+          <div className="checkout-totals-row">
+            <span>
+              {CATERING_DELIVERY_FEE_NAME} (non-taxable)
+            </span>
+            <span>{formatMoney(deliveryFeeCents)}</span>
+          </div>
+        ) : null}
         <div className="checkout-totals-row">
           <span>
             {SALES_TAX_NAME} ({SALES_TAX_PERCENT}%)

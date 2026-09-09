@@ -6,6 +6,7 @@ import { zonedDateTimeToUtc } from "@/lib/time-slots";
 import type { CartLine } from "@/lib/cart/types";
 import type { CheckoutAddress, CheckoutChannel, FulfillmentMethod } from "./types";
 import { SALES_TAX_NAME, SALES_TAX_PERCENT } from "./tax";
+import { CATERING_DELIVERY_FEE_CENTS, CATERING_DELIVERY_FEE_NAME } from "./delivery-fee";
 
 /**
  * Line items reference the real, live catalog by id and let Square resolve
@@ -145,6 +146,10 @@ export type CreateCheckoutArgs = {
  *   tax is configured for Square's hosted-ordering surfaces, not on catalog
  *   items), so we add the tax ourselves - the same constant the checkout
  *   forms display, meaning Square charges what the customer saw.
+ * - catering "delivery" orders also get a flat NON-TAXABLE $100 delivery fee
+ *   (CATERING_DELIVERY_FEE_CENTS) as an order service charge with
+ *   `taxable: false`, so it sits outside the tax base. Pickup orders have
+ *   no fee.
  * - catalog-referenced line items only - prices are Square's, never ours.
  */
 export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: string }> {
@@ -156,6 +161,12 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
   const referenceId = `bb-${randomUUID()}`;
 
   const fulfillment = buildFulfillment(args);
+
+  // Only catering can be "delivery" on this site (the Order Online route is
+  // pickup-only), so a delivery order gets the flat, NON-TAXABLE $100 fee as
+  // an order service charge - excluded from the tax base above, and shown as
+  // its own row on the catering form (same constant).
+  const isDelivery = args.fulfillmentMethod === "delivery";
 
   const order: Square.Order = {
     locationId,
@@ -172,6 +183,22 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
         scope: "ORDER",
       },
     ],
+    ...(isDelivery
+      ? {
+          serviceCharges: [
+            {
+              uid: "catering-delivery-fee",
+              name: CATERING_DELIVERY_FEE_NAME,
+              amountMoney: {
+                amount: BigInt(CATERING_DELIVERY_FEE_CENTS),
+                currency: "USD",
+              },
+              taxable: false,
+              scope: "ORDER",
+            },
+          ],
+        }
+      : {}),
   };
 
   const paymentLinkResponse = await client.checkout.paymentLinks.create({

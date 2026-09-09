@@ -249,6 +249,11 @@ The embedded order also carries:
 - an explicit ad-hoc ORDER-scoped sales tax (`order.taxes[]`, ADDITIVE,
   "10.4"%) - see the Money section above; Square does not auto-apply this
   account's tax to API orders.
+- catering "delivery" orders add a flat, NON-TAXABLE **$100 "Delivery fee"**
+  order service charge (`order.serviceCharges[]` with `taxable: false`,
+  amount in `src/lib/checkout/delivery-fee.ts`) - it sits outside the 10.4%
+  tax base, is shown as its own row on the catering form, and is charged by
+  Square. Pickup orders (catering or Order Online) never carry it.
 - catering's free-text "Special Instructions" is appended to the fulfillment
   note (`specialInstructions` → `buildFulfillment`), so the kitchen sees it
   with the ticket; Order Online pickup has no such field.

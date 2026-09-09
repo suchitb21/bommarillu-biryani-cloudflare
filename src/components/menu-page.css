@@ -1,0 +1,161 @@
+.menu-page {
+  background: linear-gradient(165deg, var(--cream) 0%, var(--cream-2) 100%);
+  padding: clamp(2rem, 5vw, 3rem) clamp(1.25rem, 5vw, 4.5rem) clamp(3rem, 6vw, 4.5rem);
+}
+
+.menu-page-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.menu-page-header {
+  text-align: center;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.menu-page-header h1 {
+  font-family: var(--font-playfair-display), serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--brown);
+}
+
+.menu-page-header p {
+  margin-top: 0.5rem;
+  color: var(--brown-soft);
+}
+
+.menu-tabs-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.menu-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.menu-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.menu-tabs-nav {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1.5px solid rgba(59, 36, 23, 0.15);
+  background: #fff;
+  color: var(--brown);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.menu-tabs-nav:hover:not(:disabled) {
+  border-color: var(--orange);
+  color: var(--orange-dark);
+}
+
+.menu-tabs-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.menu-tab {
+  flex: 0 0 auto;
+  border: 1.5px solid rgba(59, 36, 23, 0.15);
+  background: #fff;
+  color: var(--brown-soft);
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.55rem 1.15rem;
+  border-radius: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.menu-tab:hover {
+  border-color: var(--orange);
+  color: var(--orange-dark);
+}
+
+.menu-tab--active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: #fff;
+}
+
+/* `.menu-tab:hover` and `.menu-tab--active` are equal specificity (one class
+   + one pseudo-class vs. one class), so hovering the active tab let the
+   hover color win and made its text nearly invisible on the orange
+   background. This selector is more specific, so it always wins instead. */
+.menu-tab.menu-tab--active:hover {
+  color: #fff;
+  border-color: var(--orange);
+}
+
+.menu-section {
+  margin-bottom: clamp(2.5rem, 5vw, 3.5rem);
+}
+
+.menu-section h2 {
+  font-family: var(--font-playfair-display), serif;
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  font-weight: 700;
+  color: var(--brown);
+  border-bottom: 2px solid var(--orange);
+  display: inline-block;
+  padding-bottom: 0.3rem;
+  margin-bottom: 1.25rem;
+}
+
+.menu-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.menu-page-empty,
+.menu-page-error {
+  text-align: center;
+  color: var(--brown-soft);
+  padding: 3rem 1rem;
+}
+
+.menu-tab-skeleton {
+  flex: 0 0 auto;
+  width: clamp(90px, 12vw, 140px);
+  height: 2.4rem;
+  border-radius: 30px;
+  background: linear-gradient(90deg, var(--cream-2) 25%, #fff 50%, var(--cream-2) 75%);
+  background-size: 200% 100%;
+  animation: menu-item-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.menu-item-skeleton {
+  aspect-ratio: 3 / 4;
+  border-radius: 18px;
+  background: linear-gradient(90deg, var(--cream-2) 25%, #fff 50%, var(--cream-2) 75%);
+  background-size: 200% 100%;
+  animation: menu-item-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes menu-item-skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

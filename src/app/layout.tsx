@@ -3,6 +3,7 @@ import { Poppins, Dancing_Script, Playfair_Display, Geist_Mono } from "next/font
 import "./globals.css";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { OrderOnlineCartProvider, CateringCartProvider } from "@/lib/cart/cart-context";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -40,9 +41,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${poppins.variable} ${dancingScript.variable} ${playfairDisplay.variable} ${geistMono.variable}`}
     >
       <body>
-        <Navbar />
-        {children}
-        <Footer />
+        <OrderOnlineCartProvider>
+          <CateringCartProvider>
+            <Navbar />
+            {children}
+            <Footer />
+          </CateringCartProvider>
+        </OrderOnlineCartProvider>
       </body>
     </html>
   );

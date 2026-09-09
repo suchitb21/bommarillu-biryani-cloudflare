@@ -61,6 +61,28 @@
 .nav-links a:hover {
   color: var(--orange);
 }
+.cart-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.cart-badge {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.6rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--orange);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
 .btn-pill {
   background: var(--orange);
   color: #fff;

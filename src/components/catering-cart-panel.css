@@ -1,0 +1,122 @@
+.catering-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--brown);
+  color: #fbf3e3;
+  border: none;
+  border-radius: 999px;
+  padding: 0.9rem 1.5rem;
+  box-shadow: 0 10px 30px rgba(59, 36, 23, 0.35);
+  cursor: pointer;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.catering-bar-cta {
+  color: var(--orange);
+  font-weight: 700;
+}
+
+.catering-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(59, 36, 23, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+}
+
+@media (min-width: 640px) {
+  .catering-drawer-overlay {
+    align-items: center;
+    padding: 1.5rem;
+  }
+}
+
+.catering-drawer {
+  background: #fff;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  border-radius: 20px 20px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 640px) {
+  .catering-drawer {
+    border-radius: 20px;
+    max-height: 85vh;
+  }
+}
+
+.catering-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1.5px solid rgba(59, 36, 23, 0.1);
+}
+
+.catering-drawer-header h2 {
+  font-family: var(--font-playfair-display), serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--brown);
+}
+
+.catering-drawer-close {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: var(--cream-2);
+  color: var(--brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.catering-drawer-scroll {
+  overflow-y: auto;
+  padding: 1.25rem;
+  flex: 1;
+}
+
+.catering-continue-btn {
+  width: 100%;
+  margin-top: 1.25rem;
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 1.25rem;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.catering-continue-btn:hover {
+  background: var(--orange-dark);
+}
+
+.catering-back-btn {
+  background: none;
+  border: none;
+  color: var(--brown-soft);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 0.5rem;
+}

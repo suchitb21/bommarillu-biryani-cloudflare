@@ -112,42 +112,53 @@ export type CreateCheckoutArgs = {
   /** Structured channel tag, written to `order.metadata.channel`. The prose
    * `noteContext` above is only ever used for the fulfillment note. */
   channel: CheckoutChannel;
+  /** Base confirmation URL (no query string) - this function appends the
+   * order's own `?ref=<referenceId>` so the confirmation page can find the
+   * order after the customer returns from Square's hosted checkout. */
   redirectUrl: string;
 };
 
+/**
+ * Square creates the order and the payment link in ONE documented call -
+ * CreatePaymentLink with a full `order` embedded (an existing order cannot
+ * be referenced in the request, per Square's "Guidelines and Limitations").
+ *
+ * The order carries:
+ * - `referenceId` = our own token (`bb-<uuid>`), also appended to
+ *   `redirectUrl` as `?ref=`, so /order-confirmation can look the order up
+ *   by scanning recent SearchOrders results even when Square doesn't append
+ *   an `orderId` to the redirect (sandbox never does; production does).
+ * - `metadata.channel` = "order-online" | "catering" for the Dashboard.
+ * - tipping enabled on Square's hosted payment page (dollar tips, kept and
+ *   reported by Square; staff see the tip with the payment).
+ * - catalog-referenced line items only - Square computes item prices and
+ *   applies the catalog's item taxes (the 10.4% food tax) itself; our
+ *   displayed totals never include prices Square will not charge.
+ */
 export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: string }> {
   const client = getSquareClient();
   const locationId = getSquareLocationId();
+
+  // Square's `reference_id` charset is letters, digits, "-" and "_" (max 40
+  // chars); "bb-" + UUID stays well within that.
+  const referenceId = `bb-${randomUUID()}`;
 
   const fulfillment = buildFulfillment(args);
 
   const order: Square.Order = {
     locationId,
-    referenceId: randomUUID(),
+    referenceId,
     metadata: { channel: args.channel },
     lineItems: buildLineItems(args.lines),
     fulfillments: [fulfillment],
   };
 
-  const createOrderResponse = await client.orders.create({
-    order,
-    idempotencyKey: randomUUID(),
-  });
-
-  const createdOrder = createOrderResponse.order;
-  if (!createdOrder?.id || createdOrder.version == null) {
-    throw new Error("Square did not return a valid order.");
-  }
-
   const paymentLinkResponse = await client.checkout.paymentLinks.create({
     idempotencyKey: randomUUID(),
-    order: {
-      id: createdOrder.id,
-      locationId,
-      version: createdOrder.version,
-    },
+    order,
     checkoutOptions: {
-      redirectUrl: `${args.redirectUrl}?orderId=${createdOrder.id}`,
+      allowTipping: true,
+      redirectUrl: `${args.redirectUrl}?ref=${referenceId}`,
     },
   });
 

@@ -72,6 +72,7 @@ export default function CartPage() {
               showEventDate={false}
               minLeadMinutes={20}
               externalDeliveryHref={DELIVERY_ORDERING_URL}
+              taxNote="Shown total is before tax — Square adds sales tax (10.4%) at checkout."
               submitLabel="Pay now"
               totalCents={cart.totalCents}
               onSubmit={handleCheckout}

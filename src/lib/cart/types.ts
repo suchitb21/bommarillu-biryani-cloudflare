@@ -29,6 +29,9 @@ export type CartLine = {
   imageUrl?: string;
   variationId: string;
   variationName: string;
+  /** Base item-variation unit price in cents - EXCLUDING modifiers. Modifier
+   * costs ride in `modifiers` and are added by `lineTotalCents`, so totals
+   * can never double-count them. */
   unitPriceCents: number;
   modifiers: CartLineModifier[];
   quantity: number;

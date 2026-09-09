@@ -70,7 +70,10 @@ export function MenuItemModal({
   );
 
   const modifiersTotalCents = selectedModifierOptions.reduce((sum, o) => sum + o.priceCents, 0);
-  const unitCents = (selectedVariation?.priceCents ?? 0) + modifiersTotalCents;
+  // Stored per-line as base variation price only - modifier costs ride in
+  // `modifiers` and are added by lineTotalCents, so totals never double-count.
+  const variationUnitCents = selectedVariation?.priceCents ?? 0;
+  const unitCents = variationUnitCents + modifiersTotalCents;
   const totalCents = unitCents * quantity;
 
   const missingRequiredGroup = item.modifierGroups.find(
@@ -91,7 +94,7 @@ export function MenuItemModal({
       imageUrl: item.imageUrl,
       variationId: selectedVariation.id,
       variationName: selectedVariation.name,
-      unitPriceCents: unitCents,
+      unitPriceCents: variationUnitCents,
       modifiers: selectedModifierOptions.map((o) => ({ id: o.id, name: o.name, priceCents: o.priceCents })),
       quantity,
       source,

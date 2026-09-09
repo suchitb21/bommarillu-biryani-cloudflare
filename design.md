@@ -190,7 +190,10 @@ guide): catalog-referenced line items inherit the live catalog price
 automatically, so a customer tampering with the cart's `priceCents` in
 their browser before checkout can't change what Square actually charges.
 The cart's stored prices are only ever used to *display* a running total
-before checkout.
+before checkout. Taxes (the restaurant's 10.4% food sales tax) are Square's
+own computation at checkout from the catalog, so the subtotals this site
+displays are always pre-tax - both checkout forms say so next to the pay
+button (the `taxNote` passed to `CheckoutForm`).
 
 ## The Pacific-time bug, and how it's actually fixed
 
@@ -218,54 +221,57 @@ accepts for any future `pickup_at` (it only rejects times in the past).
 
 ## Order creation flow (`src/lib/checkout/build-order.ts`)
 
-Two calls, not one:
+One documented call (researched against Square's docs, 2026):
+`client.checkout.paymentLinks.create({ idempotencyKey, order, checkoutOptions })`
+- the full `Order` is embedded (line items referencing catalog ids, the
+single PICKUP fulfillment, `metadata.channel`) and Square creates the order
+and the payment link together. Square's Checkout API "Guidelines and
+Limitations" state outright that an existing order cannot be referenced in a
+`CreatePaymentLink` request, so the earlier two-call flow (create the order,
+then reference it by `id`/`version`) was removed.
 
-1. `client.orders.create({ order, idempotencyKey })` - order already has
-   `lineItems` and the single `fulfillments[]` entry fully built.
-2. `client.checkout.paymentLinks.create({ order: { id, locationId, version }, checkoutOptions: { redirectUrl }, idempotencyKey })` -
-   referencing the just-created order by id rather than embedding a new one.
+The embedded order also carries:
 
-This was chosen over the simpler, more clearly-documented one-call version
-(embed a brand new `Order` object directly in `paymentLinks.create`) so the
-real `order.id` is known *before* building `redirectUrl`, letting the
-confirmation page look up the exact order without any ambiguity.
-
-Every order also carries order-level `metadata: { channel: "order-online" |
-"catering" }` (set by whichever checkout route called `createCheckout`), so
-staff can tell the two flows apart in the Square Dashboard without parsing
-the fulfillment note - the note stays human-readable prose. `reference_id`
-remains an opaque per-order UUID.
-
-**Caveat, since this wasn't live-tested end-to-end (see below):** passing
-`order: { id, locationId, version }` to reference an already-created order
-in `paymentLinks.create` is a reasonable, standard inference from the SDK's
-types and Square's general "partial object with id+version = reference an
-existing resource" pattern, but I could not find it explicitly confirmed in
-Square's docs, and couldn't verify it live without creating a real order in
-the production account. **Safety net if it doesn't behave as expected:**
-Square's hosted checkout is independently confirmed (developer forum
-threads) to append `?orderId=...&checkoutId=...&transactionId=...` to
-`redirectUrl` automatically after a real payment completes - since this
-project's `redirectUrl` already embeds the order id itself
-(`?orderId=<id>`), Square appending its own `orderId=` alongside it is
-harmless (`URLSearchParams.get` returns the first match, which is ours, and
-both should be the same value in the working case anyway).
+- `referenceId` = a `bb-<uuid>` token (Square's charset-safe `reference_id`,
+  max 40 chars), echoed into the redirect URL as `?ref=...` so the
+  confirmation page can find the order after payment.
+- `checkoutOptions.allowTipping: true` - Square's hosted page collects
+  optional tips in dollars (preset or custom amount) and reports them with
+  the payment; no tip math happens on our side.
+- catalog-referenced line items only - Square prices items from the catalog
+  and applies the catalog item tax (the 10.4% food sales tax) itself at
+  checkout. Our displayed totals are pre-tax, and the checkout forms say so
+  via `CheckoutForm`'s `taxNote`.
+- order-level `metadata: { channel: "order-online" | "catering" }` so staff
+  can tell the two flows apart in the Square Dashboard without parsing the
+  fulfillment note (which stays human-readable prose).
 
 ## Confirmation page (`src/app/order-confirmation/page.tsx`)
 
-Square redirects here after checkout *regardless of whether payment
-actually succeeded* - looks the order up via `client.orders.get` and shows
-paid / still-processing / not-found based on the real order state
-(`netAmountDueMoney` + `tenders`), rather than assuming success because the
-browser landed on this URL.
+Square redirects here only after a *successful* hosted payment (failed or
+abandoned payments never redirect). The order is resolved two ways:
+
+1. `orderId` - appended by Square in production after payment; direct
+   `client.orders.get`.
+2. `ref` - our `bb-<uuid>` token, which works everywhere (including sandbox,
+   where Square appends no parameters): `findOrderByReferenceId`
+   (`src/lib/square/order-lookup.ts`) scans recent `SearchOrders` results -
+   SearchOrders has no reference-id filter - and matches locally.
+
+The page then shows paid / confirming / not-found from the real order state
+(`netAmountDueMoney` + `tenders`), never assuming success from the URL.
 
 ## Not yet live-tested
 
-Everything up to (not including) the actual Square Orders/Checkout API call
+Everything up to (not including) the actual Square Order Checkout API call
 was verified live in dev against the real production catalog: both carts'
 independence, the checkout forms (slot lists, DST-correct times, delivery
 address reveal, event-date minimum), and the confirmation page's graceful
-handling with no `orderId`. The `createCheckout` call itself (which writes
-a real order to the production Square account) was deliberately left for
-the restaurant to test themselves rather than creating a real order without
-being asked to.
+handling with no `orderId`. The single-call `paymentLinks.create` itself
+(writes a real order and creates a live payment link in the production
+account) was deliberately left for the restaurant to test. A production test
+should confirm, in order: the hosted page shows the right total with the
+10.4% tax, the tip option appears and a test tip is reported, payment
+completes, Square redirects, and the confirmation page resolves the order
+via both the appended `orderId` and our `?ref=` token (sandbox exercises the
+`ref` path since it appends nothing).

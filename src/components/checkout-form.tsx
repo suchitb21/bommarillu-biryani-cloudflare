@@ -27,6 +27,7 @@ export function CheckoutForm({
   minLeadMinutes,
   deliveryHelpText,
   externalDeliveryHref,
+  taxNote,
   submitLabel,
   totalCents,
   onSubmit,
@@ -44,6 +45,9 @@ export function CheckoutForm({
    * profile, the only surface that can dispatch a courier) in a new tab,
    * and this checkout handles pickup only. */
   externalDeliveryHref?: string;
+  /** Optional note shown just above the pay button - e.g. that the shown
+   * total excludes sales tax, which Square adds at checkout. */
+  taxNote?: string;
   submitLabel: string;
   totalCents: number;
   onSubmit: (values: CheckoutFormValues) => Promise<void>;
@@ -279,6 +283,8 @@ export function CheckoutForm({
           </select>
         )}
       </div>
+
+      {taxNote ? <p className="checkout-help">{taxNote}</p> : null}
 
       {error ? <p className="checkout-error">{error}</p> : null}
 

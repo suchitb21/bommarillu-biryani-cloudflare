@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckout } from "@/lib/checkout/build-order";
-import { todayInRestaurantTimeZone, zonedDateTimeToUtc } from "@/lib/time-slots";
+import {
+  isTimeWithinOpenHours,
+  orderingAvailability,
+  todayInRestaurantTimeZone,
+  zonedDateTimeToUtc,
+} from "@/lib/time-slots";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the /cart checkout form uses to build its slot list.
@@ -45,6 +50,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   }
 
   const dateStr = todayInRestaurantTimeZone();
+
+  // Ordering is only "active" while the restaurant is open per its weekly
+  // timetable (same check the checkout form shows) - reject anything that
+  // slips through while closed.
+  const availability = orderingAvailability();
+  if (!availability.isOpen) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `We're closed for online ordering right now${availability.opensLabel ? ` - it reopens ${availability.opensLabel}` : ""}.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  // Defense in depth: the client only shows slots inside the day's open
+  // windows, but never trust that either.
+  if (!isTimeWithinOpenHours(dateStr, body.timeSlot)) {
+    return NextResponse.json(
+      { ok: false, error: "That pickup time is outside our hours - please choose a time we're open." },
+      { status: 400 }
+    );
+  }
 
   // Defense in depth: the client only shows slots past the lead time, but
   // don't trust that - a slot chosen minutes ago could now be in the past.

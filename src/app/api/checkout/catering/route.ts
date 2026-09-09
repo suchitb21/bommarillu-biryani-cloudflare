@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckout } from "@/lib/checkout/build-order";
-import { zonedDateTimeToUtc } from "@/lib/time-slots";
+import { isTimeWithinOpenHours, zonedDateTimeToUtc } from "@/lib/time-slots";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the catering checkout form uses to build its date/slot list.
@@ -25,6 +25,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   }
   if (body.fulfillmentMethod === "delivery" && !body.address) {
     return NextResponse.json({ ok: false, error: "Delivery address is required." }, { status: 400 });
+  }
+
+  // Catering orders are for a future event date, so "right now" is never a
+  // gate - but the chosen event time must still fall inside that date's open
+  // windows (defense in depth on top of the client's slot list).
+  if (!isTimeWithinOpenHours(body.eventDate, body.timeSlot)) {
+    return NextResponse.json(
+      { ok: false, error: "That event time is outside our hours - please choose a time the restaurant is open." },
+      { status: 400 }
+    );
   }
 
   // Defense in depth: don't trust the client's lead-time filtering alone.

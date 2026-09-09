@@ -5,6 +5,7 @@ import "./checkout-form.css";
 import {
   earliestDateForLeadTime,
   getAvailableSlots,
+  orderingAvailability,
   todayInRestaurantTimeZone,
 } from "@/lib/time-slots";
 import type { CheckoutAddress, FulfillmentMethod } from "@/lib/checkout/types";
@@ -99,6 +100,15 @@ export function CheckoutForm({
   // Order Online: delivery lives on the Cash App / Square ordering profile,
   // so when externalDeliveryHref is set the only in-form method is pickup.
   const hasExternalDelivery = Boolean(externalDeliveryHref);
+
+  // Order Online (same-day pickup) is only "active" while the restaurant is
+  // open per its weekly timetable. Catering orders a future event date, so
+  // it is never gated by "right now".
+  const availability = useMemo(
+    () => (showEventDate ? null : orderingAvailability()),
+    [showEventDate]
+  );
+  const onlineOrderingClosed = availability !== null && !availability.isOpen;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -297,54 +307,70 @@ export function CheckoutForm({
         </div>
       ) : null}
 
-      <div className="checkout-field">
-        <label htmlFor="checkout-time">
-          {showEventDate ? "Event time" : hasExternalDelivery ? "Pickup time" : "Pickup/delivery time"} (Pacific)
-        </label>
-        {slots.length === 0 ? (
-          <p className="checkout-no-slots">No times available for that date - please call us.</p>
-        ) : (
-          <select id="checkout-time" value={selectedTimeSlot} onChange={(e) => setTimeSlot(e.target.value)}>
-            {slots.map((slot) => (
-              <option key={slot.value} value={slot.value}>
-                {slot.label}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-
-      <div className="checkout-totals">
-        <div className="checkout-totals-row">
-          <span>Subtotal</span>
-          <span>{formatMoney(totalCents)}</span>
+      {onlineOrderingClosed ? (
+        <div className="checkout-closed">
+          <p className="checkout-closed-title">We&rsquo;re closed for online ordering right now.</p>
+          {availability?.opensLabel ? (
+            <p className="checkout-closed-sub">
+              Online ordering reopens {availability.opensLabel}.
+            </p>
+          ) : null}
+          <p className="checkout-help">
+            You can still browse the menu - or use the delivery link above, which follows its own hours.
+          </p>
         </div>
-        {hasDeliveryFee ? (
-          <div className="checkout-totals-row">
-            <span>
-              {CATERING_DELIVERY_FEE_NAME} (non-taxable)
-            </span>
-            <span>{formatMoney(deliveryFeeCents)}</span>
+      ) : (
+        <>
+          <div className="checkout-field">
+            <label htmlFor="checkout-time">
+              {showEventDate ? "Event time" : hasExternalDelivery ? "Pickup time" : "Pickup/delivery time"} (Pacific)
+            </label>
+            {slots.length === 0 ? (
+              <p className="checkout-no-slots">No times available for that date - please call us.</p>
+            ) : (
+              <select id="checkout-time" value={selectedTimeSlot} onChange={(e) => setTimeSlot(e.target.value)}>
+                {slots.map((slot) => (
+                  <option key={slot.value} value={slot.value}>
+                    {slot.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
-        ) : null}
-        <div className="checkout-totals-row">
-          <span>
-            {SALES_TAX_NAME} ({SALES_TAX_PERCENT}%)
-          </span>
-          <span>{formatMoney(salesTaxCents)}</span>
-        </div>
-        <div className="checkout-totals-row checkout-totals-row--grand">
-          <span>Total</span>
-          <span>{formatMoney(grandTotalCents)}</span>
-        </div>
-      </div>
 
-      {error ? <p className="checkout-error">{error}</p> : null}
+          <div className="checkout-totals">
+            <div className="checkout-totals-row">
+              <span>Subtotal</span>
+              <span>{formatMoney(totalCents)}</span>
+            </div>
+            {hasDeliveryFee ? (
+              <div className="checkout-totals-row">
+                <span>
+                  {CATERING_DELIVERY_FEE_NAME} (non-taxable)
+                </span>
+                <span>{formatMoney(deliveryFeeCents)}</span>
+              </div>
+            ) : null}
+            <div className="checkout-totals-row">
+              <span>
+                {SALES_TAX_NAME} ({SALES_TAX_PERCENT}%)
+              </span>
+              <span>{formatMoney(salesTaxCents)}</span>
+            </div>
+            <div className="checkout-totals-row checkout-totals-row--grand">
+              <span>Total</span>
+              <span>{formatMoney(grandTotalCents)}</span>
+            </div>
+          </div>
 
-      <button type="submit" className="checkout-submit-btn" disabled={submitting || slots.length === 0}>
-        <span>{submitting ? "Redirecting to payment..." : submitLabel}</span>
-        <span>{formatMoney(grandTotalCents)}</span>
-      </button>
+          {error ? <p className="checkout-error">{error}</p> : null}
+
+          <button type="submit" className="checkout-submit-btn" disabled={submitting || slots.length === 0}>
+            <span>{submitting ? "Redirecting to payment..." : submitLabel}</span>
+            <span>{formatMoney(grandTotalCents)}</span>
+          </button>
+        </>
+      )}
     </form>
   );
 }

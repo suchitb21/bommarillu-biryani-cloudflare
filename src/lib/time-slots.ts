@@ -8,10 +8,39 @@ import { fromZonedTime, formatInTimeZone } from "date-fns-tz";
 // `new Date("4:00 PM")` parsing depends on whoever's clock is reading it.
 export const RESTAURANT_TIME_ZONE = "America/Los_Angeles";
 
-// Business hours from the site footer: 11:55 AM - 10:44 PM daily.
-const OPEN_MINUTES_OF_DAY = 11 * 60 + 55;
-const CLOSE_MINUTES_OF_DAY = 22 * 60 + 44;
 const SLOT_INTERVAL_MINUTES = 30;
+
+// Minutes of day, e.g. 11:00 AM -> 660, 10:00 PM -> 1320.
+type MinutesWindow = { start: number; end: number };
+
+/**
+ * The restaurant's weekly timetable, as minutes of day in Pacific time
+ * (Redmond, USA). Source: the Square timetable the restaurant follows.
+ * Indexed by JS weekday (0 = Sunday ... 6 = Saturday).
+ *
+ * Monday        11:00 AM - 10:00 PM
+ * Tue-Thu       11:00 AM - 2:30 PM, 4:30 PM - 10:00 PM   (lunch break)
+ * Friday/Sat    11:00 AM - 10:45 PM
+ * Sunday        11:00 AM - 10:00 PM
+ */
+const WEEKLY_OPEN_WINDOWS: Record<number, MinutesWindow[]> = {
+  0: [{ start: 11 * 60, end: 22 * 60 }], // Sun
+  1: [{ start: 11 * 60, end: 22 * 60 }], // Mon
+  2: [
+    { start: 11 * 60, end: 14 * 60 + 30 }, // Tue
+    { start: 16 * 60 + 30, end: 22 * 60 },
+  ],
+  3: [
+    { start: 11 * 60, end: 14 * 60 + 30 }, // Wed
+    { start: 16 * 60 + 30, end: 22 * 60 },
+  ],
+  4: [
+    { start: 11 * 60, end: 14 * 60 + 30 }, // Thu
+    { start: 16 * 60 + 30, end: 22 * 60 },
+  ],
+  5: [{ start: 11 * 60, end: 22 * 60 + 45 }], // Fri
+  6: [{ start: 11 * 60, end: 22 * 60 + 45 }], // Sat
+};
 
 export type TimeSlot = {
   /** "HH:mm" 24-hour, always interpreted in RESTAURANT_TIME_ZONE. */
@@ -20,12 +49,38 @@ export type TimeSlot = {
   label: string;
 };
 
-function formatSlotLabel(minutesOfDay: number): string {
+/** Weekday (0 = Sunday) of a "YYYY-MM-DD" calendar date. */
+function weekdayOfDate(dateStr: string): number {
+  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+}
+
+/** The open windows for a calendar date, or [] when the restaurant is closed. */
+function getOpenWindowsForDate(dateStr: string): MinutesWindow[] {
+  return WEEKLY_OPEN_WINDOWS[weekdayOfDate(dateStr)] ?? [];
+}
+
+/** Minutes-of-day from a "HH:mm" string. */
+function timeToMinutes(timeStr: string): number {
+  const [hour, minute] = timeStr.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function toHHmm(minutesOfDay: number): string {
+  const hour = Math.floor(minutesOfDay / 60);
+  const minute = minutesOfDay % 60;
+  return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+}
+
+function formatTimeLabel(minutesOfDay: number): string {
   const hour = Math.floor(minutesOfDay / 60);
   const minute = minutesOfDay % 60;
   const period = hour < 12 ? "AM" : "PM";
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  return `${displayHour}:${minute.toString().padStart(2, "0")} ${period} PT`;
+  return `${displayHour}:${minute.toString().padStart(2, "0")} ${period}`;
+}
+
+function formatSlotLabel(minutesOfDay: number): string {
+  return `${formatTimeLabel(minutesOfDay)} PT`;
 }
 
 /** Converts a "YYYY-MM-DD" date + "HH:mm" time, both meant as wall-clock
@@ -48,24 +103,72 @@ export function earliestDateForLeadTime(minLeadMinutes: number): string {
   return formatInTimeZone(earliest, RESTAURANT_TIME_ZONE, "yyyy-MM-dd");
 }
 
-/** Business-hours time slots for a given Pacific date, excluding any slot
- * less than `minLeadMinutes` away from now (so "today" naturally has fewer
- * options than a date further out). */
+/** True when the given date+time (Pacific wall-clock) falls inside one of
+ * the restaurant's open windows (inclusive of the exact closing minute, so
+ * a pickup exactly at close is allowed for validation). */
+export function isTimeWithinOpenHours(dateStr: string, timeStr: string): boolean {
+  const minutes = timeToMinutes(timeStr);
+  return getOpenWindowsForDate(dateStr).some((w) => minutes >= w.start && minutes <= w.end);
+}
+
+/**
+ * Is the restaurant open for online ordering RIGHT NOW (Pacific), and if
+ * not, when does it next open? Order Online pickup is same-day, so this
+ * decides whether ordering is "active" per the timetable.
+ */
+export function orderingAvailability(): { isOpen: boolean; opensLabel: string | null } {
+  const now = new Date();
+  const todayStr = formatInTimeZone(now, RESTAURANT_TIME_ZONE, "yyyy-MM-dd");
+  const minutesNow =
+    Number(formatInTimeZone(now, RESTAURANT_TIME_ZONE, "H")) * 60 +
+    Number(formatInTimeZone(now, RESTAURANT_TIME_ZONE, "m"));
+
+  const todayWindows = getOpenWindowsForDate(todayStr);
+  if (todayWindows.some((w) => minutesNow >= w.start && minutesNow < w.end)) {
+    return { isOpen: true, opensLabel: null };
+  }
+
+  // Still open later today (e.g. inside the Tue-Thu lunch break)?
+  const nextToday = todayWindows.find((w) => w.start > minutesNow);
+  if (nextToday) {
+    return { isOpen: false, opensLabel: `today at ${formatTimeLabel(nextToday.start)}` };
+  }
+
+  // Otherwise the next open day (up to a week ahead).
+  for (let daysAhead = 1; daysAhead <= 7; daysAhead++) {
+    const candidate = new Date(now.getTime() + daysAhead * 86_400_000);
+    const candidateStr = formatInTimeZone(candidate, RESTAURANT_TIME_ZONE, "yyyy-MM-dd");
+    const windows = getOpenWindowsForDate(candidateStr);
+    if (windows.length > 0) {
+      const dayLabel =
+        daysAhead === 1
+          ? "tomorrow"
+          : formatInTimeZone(candidate, RESTAURANT_TIME_ZONE, "EEEE");
+      return { isOpen: false, opensLabel: `${dayLabel} at ${formatTimeLabel(windows[0].start)}` };
+    }
+  }
+
+  return { isOpen: false, opensLabel: null };
+}
+
+/** Business-hours time slots for a given Pacific date, from the open windows
+ * of that weekday, excluding any slot less than `minLeadMinutes` away from
+ * now (so "today" naturally has fewer options than a date further out). */
 export function getAvailableSlots(dateStr: string, minLeadMinutes: number): TimeSlot[] {
   const cutoff = Date.now() + minLeadMinutes * 60_000;
   const slots: TimeSlot[] = [];
 
-  for (
-    let minutesOfDay = OPEN_MINUTES_OF_DAY;
-    minutesOfDay <= CLOSE_MINUTES_OF_DAY;
-    minutesOfDay += SLOT_INTERVAL_MINUTES
-  ) {
-    const hour = Math.floor(minutesOfDay / 60);
-    const minute = minutesOfDay % 60;
-    const value = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-    const instant = zonedDateTimeToUtc(dateStr, value);
-    if (instant.getTime() >= cutoff) {
-      slots.push({ value, label: formatSlotLabel(minutesOfDay) });
+  for (const window of getOpenWindowsForDate(dateStr)) {
+    for (
+      let minutesOfDay = window.start;
+      minutesOfDay < window.end;
+      minutesOfDay += SLOT_INTERVAL_MINUTES
+    ) {
+      const value = toHHmm(minutesOfDay);
+      const instant = zonedDateTimeToUtc(dateStr, value);
+      if (instant.getTime() >= cutoff) {
+        slots.push({ value, label: formatSlotLabel(minutesOfDay) });
+      }
     }
   }
 

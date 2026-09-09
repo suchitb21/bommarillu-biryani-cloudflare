@@ -220,12 +220,27 @@ slot chosen minutes ago could already be stale by the time the request
 lands).
 
 Lead times (adjustable, currently): Order Online pickup 20 minutes,
-Catering 24 hours. Business hours used for the slot list: 11:55 AM-10:44 PM
-(from the site footer), 30-minute increments. Both are enforced only by
-this site's server code (`src/lib/time-slots.ts` + the checkout route
-handlers) - Square's own dashboard lead-time/timing settings only govern its
-hosted ordering surfaces and do not gate Orders API orders, which Square
-accepts for any future `pickup_at` (it only rejects times in the past).
+Catering 24 hours. All enforced only by this site's server code
+(`src/lib/time-slots.ts` + the checkout route handlers) - Square's own
+dashboard lead-time/timing settings only govern its hosted ordering surfaces
+and do not gate Orders API orders, which Square accepts for any future
+`pickup_at` (it only rejects times in the past).
+
+**Ordering-hours timetable** (also in `src/lib/time-slots.ts`, `WEEKLY_OPEN_
+WINDOWS`, Pacific time - the Square timetable for Redmond):
+
+- Mon / Sun: 11:00 AM - 10:00 PM
+- Tue - Thu: 11:00 AM - 2:30 PM and 4:30 PM - 10:00 PM (lunch break)
+- Fri / Sat: 11:00 AM - 10:45 PM
+
+Slots are generated from these per-weekday windows, so a lunch-break window
+never offers pickup times. **Order Online pickup is only "active" while the
+restaurant is currently open** (`orderingAvailability()`): when closed, the
+checkout form swaps to a "We're closed - reopens <next open time>" panel and
+the `/api/checkout/order-online` route rejects requests (defense in depth).
+Catering orders a future event date, so it is never gated by "right now" -
+but the chosen event time must fall inside that date's open windows (checked
+client-side via the slot list and re-checked by the route).
 
 ## Order creation flow (`src/lib/checkout/build-order.ts`)
 

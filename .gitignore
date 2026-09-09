@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local npm cache (workspace) used when ~/.npm is read-only
+/.npm-cache/

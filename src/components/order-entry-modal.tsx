@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import "./order-entry-modal.css";
 import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
@@ -8,6 +8,24 @@ import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
 // Once per browser session: picking an option or "just browsing" dismisses
 // it until the next session, so it never nags a returning visitor.
 const DISMISS_KEY = "bommarillu-order-entry-dismissed";
+
+// No-op subscription: the modal only needs "are we on the client yet?" as a
+// one-way latch (server snapshot false -> client snapshot true) so it can
+// read sessionStorage and render after hydration without calling setState
+// from an effect.
+function noopSubscribe(): () => void {
+  return () => {};
+}
+
+function readDismissed(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return sessionStorage.getItem(DISMISS_KEY) === "1";
+  } catch {
+    // sessionStorage unavailable - just show it.
+    return false;
+  }
+}
 
 /**
  * First-choice popup on the home page: Order Online vs Catering, and - for
@@ -17,20 +35,13 @@ const DISMISS_KEY = "bommarillu-order-entry-dismissed";
  */
 export function OrderEntryModal() {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"order-type" | "online">("order-type");
+  const [dismissed, setDismissed] = useState<boolean>(readDismissed);
 
-  useEffect(() => {
-    // Client-only: never render on the server, and only if this session
-    // hasn't already dismissed it.
-    let dismissed = false;
-    try {
-      dismissed = sessionStorage.getItem(DISMISS_KEY) === "1";
-    } catch {
-      // sessionStorage unavailable - just show it.
-    }
-    setOpen(!dismissed);
-  }, []);
+  // false during SSR and during hydration, true on the first client render
+  // after hydration - so sessionStorage is only read client-side.
+  const isClient = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const open = isClient && !dismissed;
 
   const dismiss = useCallback(() => {
     try {
@@ -38,8 +49,21 @@ export function OrderEntryModal() {
     } catch {
       // Ignore write failures.
     }
-    setOpen(false);
+    setDismissed(true);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [open, dismiss]);
 
   useEffect(() => {
     if (!open) return;

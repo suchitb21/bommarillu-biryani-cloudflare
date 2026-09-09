@@ -45,6 +45,11 @@
   display: block;
   margin-top: 2px;
 }
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.5rem, 3vw, 2.75rem);
+}
 .nav-links {
   display: flex;
   align-items: center;
@@ -141,5 +146,8 @@
   }
   .hamburger {
     display: flex;
+  }
+  .navbar-right {
+    gap: 1rem;
   }
 }

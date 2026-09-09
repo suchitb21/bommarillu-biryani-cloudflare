@@ -35,30 +35,32 @@ export function Navbar() {
         </div>
       </div>
 
-      <nav className={`nav-links${open ? " open" : ""}`} id="navLinks">
-        <Link href="/">Home</Link>
-        <Link href="/#menu">Menu</Link>
-        <Link href="/catering">Catering</Link>
-        <Link href="/about-us">About Us</Link>
-        <Link href="/contact">Contact</Link>
+      <div className="navbar-right">
+        <nav className={`nav-links${open ? " open" : ""}`} id="navLinks">
+          <Link href="/">Home</Link>
+          <Link href="/catering">Catering</Link>
+          <Link href="/about-us">About Us</Link>
+          <Link href="/contact">Contact</Link>
+          <Link href="/order-online" className="btn-pill">
+            Order Online
+          </Link>
+        </nav>
+
         <Link href="/cart" className="cart-link" aria-label={`Cart, ${cart.totalCount} items`}>
           <CartIcon />
           {cart.totalCount > 0 ? <span className="cart-badge">{cart.totalCount}</span> : null}
         </Link>
-        <Link href="/order-online" className="btn-pill">
-          Order Online
-        </Link>
-      </nav>
 
-      <button
-        className="hamburger"
-        aria-label="Toggle menu"
-        onClick={() => setOpen((v) => !v)}
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
+        <button
+          className="hamburger"
+          aria-label="Toggle menu"
+          onClick={() => setOpen((v) => !v)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
     </header>
   );
 }

@@ -1,8 +1,70 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import "./home.css";
 import { OrderEntryModal } from "@/components/order-entry-modal";
 
+const TESTIMONIALS = [
+  {
+    name: "Britt B.",
+    quote:
+      "Ate here for the first time last week and it was delicious! At first glance it seems like a normal amount of food but once you dig into it, I'd be impressed if anyone could eat it all in one sitting! I ordered three entrees and they lasted over 4 meals. Service was quick and food was done on time, I really appreciate that the curry dish was saran-wrapped to keep it from leaking — very thoughtful addition.",
+  },
+  {
+    name: "Nidhi K.",
+    quote:
+      "We have tried multiple items here and it's always been good. The Bommarillu special chicken biryani and chicken 999 are really tasty. People are nice and offer different spice levels as requested. Always had a good experience. Totally worth the price. Would recommend this place.",
+  },
+  {
+    name: "Hemanth G.",
+    quote:
+      "I had a wonderful experience at Bommarillu Indian Cuisine! The food was great, bursting with fresh flavors, and the service was friendly. I truly enjoyed my meal and would definitely recommend it to others.",
+  },
+  {
+    name: "Megha S.",
+    quote:
+      "Absolutely delicious! I ordered the veg and paneer biryani, tasty and full of flavor. I also loved the kadhi paneer. I've ordered it many times and the taste is always consistently amazing. Highly recommend!",
+  },
+  {
+    name: "Gnana M.",
+    quote:
+      "Best mutton biryani I've ever had! I've had mutton biryani in many states, but this place truly stands out as the best so far. The mutton pieces were perfectly cooked — tender, flavorful, and well-seasoned. Outstanding Andhra-style dum biryani with authentic spices and rich taste.",
+  },
+  {
+    name: "Eugene C.",
+    quote:
+      "The biryani here is a must! I got the Bommarillu Special Chicken Biryani (boneless) and it was outstanding. The rice was perfectly cooked and the spice blend was spot-on. The chicken was incredibly juicy and tender, not dry at all. Authentic flavors and generous portions — definitely found my new biryani destination!",
+  },
+];
+
 export default function Home() {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const cards = document.querySelectorAll(".testimonial-card");
+    if (!cards.length) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    cards.forEach((c) => observer.observe(c));
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollAmount = () => {
+    const track = trackRef.current;
+    const card = track?.querySelector<HTMLElement>(".testimonial-card");
+    return (card?.offsetWidth ?? 280) + 22;
+  };
+
   return (
     <>
       <OrderEntryModal />
@@ -211,7 +273,7 @@ export default function Home() {
               <div className="ribbon ribbon--bestseller">Bestseller</div>
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/images/biryani-kadhai.jpg" alt="Chicken Dum Biryani" />
+                <img src="/menu-highlights/chicken-dum-biryani.webp" alt="Chicken Dum Biryani" />
                 <div className="spice-row">
                   <ChiliIcon />
                   <ChiliIcon />
@@ -230,7 +292,7 @@ export default function Home() {
               <div className="ribbon ribbon--premium">Premium</div>
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/images/biryani-kadhai.jpg" alt="Mutton Biryani (Goat) Weekend Special" />
+                <img src="/menu-highlights/mutton-biryani-weekend-special.webp" alt="Mutton Biryani (Goat) Weekend Special" />
                 <div className="spice-row">
                   <ChiliIcon />
                   <ChiliIcon />
@@ -254,7 +316,7 @@ export default function Home() {
               <div className="ribbon ribbon--chef">Chef&rsquo;s Pick</div>
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/images/biryani-kadhai.jpg" alt="Chef's Special Egg Biryani" />
+                <img src="/menu-highlights/chefs-special-egg-biryani.webp" alt="Chef's Special Egg Biryani" />
                 <div className="spice-row">
                   <ChiliIcon />
                 </div>
@@ -273,7 +335,7 @@ export default function Home() {
               <div className="veg-dot nonveg" />
               <div className="card-media">
                 <img
-                  src="/images/biryani-kadhai.jpg"
+                  src="/menu-highlights/bommarillu-special-chicken-biryani.webp"
                   alt="Bommarillu Special Chicken Biryani (Boneless)"
                 />
                 <div className="spice-row">
@@ -297,7 +359,7 @@ export default function Home() {
             <div className="menu-card">
               <div className="veg-dot" />
               <div className="card-media">
-                <img src="/images/biryani-kadhai.jpg" alt="Paneer Biryani" />
+                <img src="/menu-highlights/paneer-biryani.webp" alt="Paneer Biryani" />
                 <div className="spice-row">
                   <ChiliIcon />
                 </div>
@@ -314,7 +376,7 @@ export default function Home() {
             <div className="menu-card">
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/images/biryani-kadhai.jpg" alt="Butter Chicken" />
+                <img src="/menu-highlights/butter-chicken.webp" alt="Butter Chicken" />
                 <div className="spice-row">
                   <ChiliIcon />
                 </div>
@@ -327,6 +389,104 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="testimonials">
+        <div className="dot dot--orange" style={{ width: 7, height: 7, top: "10%", left: "6%" }} />
+        <div className="dot dot--ring" style={{ width: 16, height: 16, top: "80%", right: "9%" }} />
+        <div className="dot dot--orange" style={{ width: 6, height: 6, top: "20%", right: "16%" }} />
+
+        <div className="bs-heading">
+          <svg viewBox="0 0 36 36" fill="none">
+            <path
+              d="M4 18c6-8 12-8 18 0M22 18c4-5 8-5 10-2"
+              stroke="#f0821e"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            />
+            <circle cx="30" cy="12" r="2" fill="#f0821e" />
+          </svg>
+          <h2>
+            What Our <span>Guests Say</span>
+          </h2>
+          <svg viewBox="0 0 36 36" fill="none">
+            <path
+              d="M32 18c-6-8-12-8-18 0M14 18c-4-5-8-5-10-2"
+              stroke="#f0821e"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            />
+            <circle cx="6" cy="12" r="2" fill="#f0821e" />
+          </svg>
+        </div>
+        <p className="bs-sub">
+          Real feedback from real diners, straight from our Google reviews.
+        </p>
+
+        <div className="testimonial-wrap">
+          <button
+            className="testimonial-arrow testimonial-arrow--prev"
+            aria-label="Previous reviews"
+            onClick={() => trackRef.current?.scrollBy({ left: -scrollAmount(), behavior: "smooth" })}
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M15 6l-6 6 6 6"
+                stroke="#fff"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+
+          <div className="testimonial-track" ref={trackRef}>
+            {TESTIMONIALS.map((t) => (
+              <div className="testimonial-card" key={t.name}>
+                <div className="testimonial-stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <svg key={i} viewBox="0 0 24 24" fill="#f0821e">
+                      <path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.6 7-6.2-3.9-6.2 3.9 1.6-7L2 9.5l7.1-.6Z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="testimonial-quote">{t.quote}</p>
+                <div className="testimonial-foot">
+                  <span className="testimonial-name">{t.name}</span>
+                  <span className="testimonial-source">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" fill="#4c7a3d" />
+                      <path
+                        d="M8 12l2.5 2.5L16 9"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Google review
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            className="testimonial-arrow testimonial-arrow--next"
+            aria-label="Next reviews"
+            onClick={() => trackRef.current?.scrollBy({ left: scrollAmount(), behavior: "smooth" })}
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M9 6l6 6-6 6"
+                stroke="#fff"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
         </div>
       </section>
 

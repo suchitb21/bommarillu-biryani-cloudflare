@@ -190,10 +190,18 @@ guide): catalog-referenced line items inherit the live catalog price
 automatically, so a customer tampering with the cart's `priceCents` in
 their browser before checkout can't change what Square actually charges.
 The cart's stored prices are only ever used to *display* a running total
-before checkout. Taxes (the restaurant's 10.4% food sales tax) are Square's
-own computation at checkout from the catalog, so the subtotals this site
-displays are always pre-tax - both checkout forms say so next to the pay
-button (the `taxNote` passed to `CheckoutForm`).
+before checkout.
+
+**Tax is added explicitly, not inherited.** The restaurant's 10.4% food
+sales tax is *not* auto-applied when an order is created via the Orders API
+- Square only auto-applies taxes attached to catalog items, and this
+account's tax lives in its hosted-ordering configuration. So every order
+gets an ad-hoc ORDER-scoped tax (`order.taxes[]`, ADDITIVE, percentage
+"10.4") at the rate defined once in `src/lib/checkout/tax.ts`
+(`SALES_TAX_PERCENT`), and the checkout forms compute the same tax from that
+constant and show Subtotal / Sales tax / Total rows - Square's hosted page
+then charges exactly the total the customer saw (a tip, chosen later on
+Square's page, is added on top and is not taxed).
 
 ## The Pacific-time bug, and how it's actually fixed
 
@@ -238,10 +246,13 @@ The embedded order also carries:
 - `checkoutOptions.allowTipping: true` - Square's hosted page collects
   optional tips in dollars (preset or custom amount) and reports them with
   the payment; no tip math happens on our side.
-- catalog-referenced line items only - Square prices items from the catalog
-  and applies the catalog item tax (the 10.4% food sales tax) itself at
-  checkout. Our displayed totals are pre-tax, and the checkout forms say so
-  via `CheckoutForm`'s `taxNote`.
+- an explicit ad-hoc ORDER-scoped sales tax (`order.taxes[]`, ADDITIVE,
+  "10.4"%) - see the Money section above; Square does not auto-apply this
+  account's tax to API orders.
+- catering's free-text "Special Instructions" is appended to the fulfillment
+  note (`specialInstructions` → `buildFulfillment`), so the kitchen sees it
+  with the ticket; Order Online pickup has no such field.
+- catalog-referenced line items only - prices are Square's, never ours.
 - order-level `metadata: { channel: "order-online" | "catering" }` so staff
   can tell the two flows apart in the Square Dashboard without parsing the
   fulfillment note (which stays human-readable prose).

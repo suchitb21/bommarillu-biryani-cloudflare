@@ -27,7 +27,8 @@
 }
 
 .checkout-field input,
-.checkout-field select {
+.checkout-field select,
+.checkout-field textarea {
   border: 1.5px solid rgba(59, 36, 23, 0.2);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
@@ -37,8 +38,17 @@
   background: #fff;
 }
 
+.checkout-field textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.45;
+}
+
 .checkout-field input:focus,
-.checkout-field select:focus {
+.checkout-field select:focus,
+.checkout-field textarea:focus {
   outline: 2px solid var(--orange);
   outline-offset: 1px;
 }
@@ -112,4 +122,29 @@
 .checkout-no-slots {
   font-size: 0.85rem;
   color: var(--red-dark);
+}
+
+/* Subtotal / tax / total breakdown shown above the pay button. */
+.checkout-totals {
+  margin: 0.75rem 0 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1.5px dashed rgba(59, 36, 23, 0.2);
+}
+
+.checkout-totals-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--brown-soft);
+  padding: 0.15rem 0;
+}
+
+.checkout-totals-row--grand {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--brown);
+  padding-top: 0.3rem;
+  border-top: 1px solid rgba(59, 36, 23, 0.15);
+  margin-top: 0.3rem;
 }

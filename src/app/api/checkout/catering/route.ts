@@ -45,6 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       address: body.address,
       dateStr: body.eventDate,
       timeStr: body.timeSlot,
+      specialInstructions: body.specialInstructions,
       // Catering "delivery" stays a PICKUP fulfillment with the address on
       // the recipient and in the note - Square's courier dispatch is not
       // available for API-created orders (see src/lib/delivery.ts), and

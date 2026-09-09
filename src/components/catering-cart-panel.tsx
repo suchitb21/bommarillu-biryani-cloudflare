@@ -32,6 +32,7 @@ export function CateringCartPanel() {
       address: values.address,
       eventDate: values.eventDate ?? "",
       timeSlot: values.timeSlot,
+      specialInstructions: values.specialInstructions,
       lines: cart.lines,
     };
 
@@ -113,7 +114,6 @@ export function CateringCartPanel() {
                     showEventDate
                     minLeadMinutes={24 * 60}
                     deliveryHelpText="Delivery for catering orders is arranged directly by our staff after you check out - we'll confirm details by phone."
-                    taxNote="Shown total is before tax — Square adds sales tax (10.4%) at checkout."
                     submitLabel="Pay now"
                     totalCents={cart.totalCents}
                     onSubmit={handleCheckout}

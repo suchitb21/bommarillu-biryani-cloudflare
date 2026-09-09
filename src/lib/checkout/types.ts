@@ -44,6 +44,8 @@ export type CateringCheckoutRequest = {
   eventDate: string;
   /** "HH:mm", always Pacific time. */
   timeSlot: string;
+  /** Optional free-text instructions for the kitchen (allergies, setup...). */
+  specialInstructions?: string;
   lines: CartLine[];
 };
 

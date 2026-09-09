@@ -5,6 +5,7 @@ import { getSquareClient, getSquareLocationId } from "@/lib/square/client";
 import { zonedDateTimeToUtc } from "@/lib/time-slots";
 import type { CartLine } from "@/lib/cart/types";
 import type { CheckoutAddress, CheckoutChannel, FulfillmentMethod } from "./types";
+import { SALES_TAX_NAME, SALES_TAX_PERCENT } from "./tax";
 
 /**
  * Line items reference the real, live catalog by id and let Square resolve
@@ -56,6 +57,9 @@ type BuildFulfillmentArgs = {
   dateStr: string;
   timeStr: string;
   noteContext: string;
+  /** Catering only - customer's free-text special instructions, appended to
+   * the fulfillment note so staff see them with the ticket. */
+  specialInstructions?: string;
 };
 
 /**
@@ -68,7 +72,7 @@ type BuildFulfillmentArgs = {
  * themselves (catering orders are too large for courier partners).
  */
 function buildFulfillment(args: BuildFulfillmentArgs): Square.Fulfillment {
-  const { name, phone, fulfillmentMethod, address, dateStr, timeStr, noteContext } = args;
+  const { name, phone, fulfillmentMethod, address, dateStr, timeStr, noteContext, specialInstructions } = args;
   const whenLabel = formatSlotForNote(dateStr, timeStr);
   const instant = zonedDateTimeToUtc(dateStr, timeStr).toISOString();
 
@@ -82,6 +86,9 @@ function buildFulfillment(args: BuildFulfillmentArgs): Square.Fulfillment {
     noteParts.push(`CATERING DELIVERY (restaurant-arranged) to: ${addressLine}`);
   } else {
     noteParts.push("Pickup at the restaurant");
+  }
+  if (specialInstructions?.trim()) {
+    noteParts.push(`Special instructions: ${specialInstructions.trim()}`);
   }
   const note = noteParts.join(" | ").slice(0, 500);
 
@@ -109,6 +116,8 @@ export type CreateCheckoutArgs = {
   dateStr: string;
   timeStr: string;
   noteContext: string;
+  /** Catering only - customer's free-text special instructions. */
+  specialInstructions?: string;
   /** Structured channel tag, written to `order.metadata.channel`. The prose
    * `noteContext` above is only ever used for the fulfillment note. */
   channel: CheckoutChannel;
@@ -131,9 +140,12 @@ export type CreateCheckoutArgs = {
  * - `metadata.channel` = "order-online" | "catering" for the Dashboard.
  * - tipping enabled on Square's hosted payment page (dollar tips, kept and
  *   reported by Square; staff see the tip with the payment).
- * - catalog-referenced line items only - Square computes item prices and
- *   applies the catalog's item taxes (the 10.4% food tax) itself; our
- *   displayed totals never include prices Square will not charge.
+ * - an explicit ad-hoc ORDER-scoped sales tax at SALES_TAX_PERCENT (10.4%).
+ *   Square does NOT auto-apply this account's tax to API-created orders (its
+ *   tax is configured for Square's hosted-ordering surfaces, not on catalog
+ *   items), so we add the tax ourselves - the same constant the checkout
+ *   forms display, meaning Square charges what the customer saw.
+ * - catalog-referenced line items only - prices are Square's, never ours.
  */
 export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: string }> {
   const client = getSquareClient();
@@ -151,6 +163,15 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
     metadata: { channel: args.channel },
     lineItems: buildLineItems(args.lines),
     fulfillments: [fulfillment],
+    taxes: [
+      {
+        uid: "sales-tax",
+        name: SALES_TAX_NAME,
+        type: "ADDITIVE",
+        percentage: String(SALES_TAX_PERCENT),
+        scope: "ORDER",
+      },
+    ],
   };
 
   const paymentLinkResponse = await client.checkout.paymentLinks.create({

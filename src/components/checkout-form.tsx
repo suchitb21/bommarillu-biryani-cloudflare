@@ -8,6 +8,7 @@ import {
   todayInRestaurantTimeZone,
 } from "@/lib/time-slots";
 import type { CheckoutAddress, FulfillmentMethod } from "@/lib/checkout/types";
+import { computeSalesTaxCents, SALES_TAX_NAME, SALES_TAX_PERCENT } from "@/lib/checkout/tax";
 
 export type CheckoutFormValues = {
   name: string;
@@ -16,6 +17,8 @@ export type CheckoutFormValues = {
   address?: CheckoutAddress;
   eventDate?: string;
   timeSlot: string;
+  /** Catering only - free-text kitchen instructions. */
+  specialInstructions?: string;
 };
 
 function formatMoney(cents: number): string {
@@ -27,7 +30,6 @@ export function CheckoutForm({
   minLeadMinutes,
   deliveryHelpText,
   externalDeliveryHref,
-  taxNote,
   submitLabel,
   totalCents,
   onSubmit,
@@ -45,10 +47,10 @@ export function CheckoutForm({
    * profile, the only surface that can dispatch a courier) in a new tab,
    * and this checkout handles pickup only. */
   externalDeliveryHref?: string;
-  /** Optional note shown just above the pay button - e.g. that the shown
-   * total excludes sales tax, which Square adds at checkout. */
-  taxNote?: string;
   submitLabel: string;
+  /** Pre-tax subtotal in cents - sales tax is computed from the shared
+   * SALES_TAX constant and shown as its own row (Square charges the same
+   * ad-hoc tax on the order it creates). */
   totalCents: number;
   onSubmit: (values: CheckoutFormValues) => Promise<void>;
 }) {
@@ -63,9 +65,15 @@ export function CheckoutForm({
   const [eventDate, setEventDate] = useState(() =>
     showEventDate ? earliestDateForLeadTime(minLeadMinutes) : todayInRestaurantTimeZone()
   );
+  const [specialInstructions, setSpecialInstructions] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sales tax is computed here from the same constant the server attaches to
+  // the Square order, so Square charges exactly what this form shows.
+  const salesTaxCents = computeSalesTaxCents(totalCents);
+  const grandTotalCents = totalCents + salesTaxCents;
 
   const dateForSlots = showEventDate ? eventDate : todayInRestaurantTimeZone();
   const slots = useMemo(
@@ -117,6 +125,7 @@ export function CheckoutForm({
             : undefined,
         eventDate: showEventDate ? eventDate : undefined,
         timeSlot: selectedTimeSlot,
+        specialInstructions: showEventDate ? specialInstructions.trim() || undefined : undefined,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -267,6 +276,20 @@ export function CheckoutForm({
         </div>
       ) : null}
 
+      {showEventDate ? (
+        <div className="checkout-field">
+          <label htmlFor="checkout-special-instructions">Special instructions (optional)</label>
+          <textarea
+            id="checkout-special-instructions"
+            rows={3}
+            value={specialInstructions}
+            onChange={(e) => setSpecialInstructions(e.target.value)}
+            placeholder="Allergies, dietary needs, platter setup, napkin/serving notes, etc."
+            maxLength={500}
+          />
+        </div>
+      ) : null}
+
       <div className="checkout-field">
         <label htmlFor="checkout-time">
           {showEventDate ? "Event time" : hasExternalDelivery ? "Pickup time" : "Pickup/delivery time"} (Pacific)
@@ -284,13 +307,28 @@ export function CheckoutForm({
         )}
       </div>
 
-      {taxNote ? <p className="checkout-help">{taxNote}</p> : null}
+      <div className="checkout-totals">
+        <div className="checkout-totals-row">
+          <span>Subtotal</span>
+          <span>{formatMoney(totalCents)}</span>
+        </div>
+        <div className="checkout-totals-row">
+          <span>
+            {SALES_TAX_NAME} ({SALES_TAX_PERCENT}%)
+          </span>
+          <span>{formatMoney(salesTaxCents)}</span>
+        </div>
+        <div className="checkout-totals-row checkout-totals-row--grand">
+          <span>Total</span>
+          <span>{formatMoney(grandTotalCents)}</span>
+        </div>
+      </div>
 
       {error ? <p className="checkout-error">{error}</p> : null}
 
       <button type="submit" className="checkout-submit-btn" disabled={submitting || slots.length === 0}>
         <span>{submitting ? "Redirecting to payment..." : submitLabel}</span>
-        <span>{formatMoney(totalCents)}</span>
+        <span>{formatMoney(grandTotalCents)}</span>
       </button>
     </form>
   );

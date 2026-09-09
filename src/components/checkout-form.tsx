@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import "./checkout-form.css";
 import {
   earliestDateForLeadTime,
@@ -71,6 +72,7 @@ export function CheckoutForm({
   const [timeSlot, setTimeSlot] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   // Sales tax is computed here from the same constant the server attaches to
   // the Square order, so Square charges exactly what this form shows.
@@ -122,6 +124,9 @@ export function CheckoutForm({
       (!addressLine1.trim() || !city.trim() || !state.trim() || !postalCode.trim())
     ) {
       return setError("Please complete the delivery address.");
+    }
+    if (!agreedToTerms) {
+      return setError("Please agree to the Terms & Conditions and Privacy Policy to continue.");
     }
 
     setSubmitting(true);
@@ -363,9 +368,37 @@ export function CheckoutForm({
             </div>
           </div>
 
+          <div className="checkout-consent">
+            <label className="checkout-consent-label">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked);
+                  setError(null);
+                }}
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                  Terms &amp; Conditions
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </Link>
+                . You must agree before paying.
+              </span>
+            </label>
+          </div>
+
           {error ? <p className="checkout-error">{error}</p> : null}
 
-          <button type="submit" className="checkout-submit-btn" disabled={submitting || slots.length === 0}>
+          <button
+            type="submit"
+            className="checkout-submit-btn"
+            disabled={!agreedToTerms || submitting || slots.length === 0}
+          >
             <span>{submitting ? "Redirecting to payment..." : submitLabel}</span>
             <span>{formatMoney(grandTotalCents)}</span>
           </button>

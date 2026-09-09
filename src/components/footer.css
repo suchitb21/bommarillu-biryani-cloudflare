@@ -119,3 +119,26 @@
     text-align: center;
   }
 }
+
+.footer-hours-title {
+  display: block;
+  font-weight: 700;
+  color: var(--yellow);
+  margin-bottom: 0.35rem;
+}
+
+.footer-bottom-links {
+  display: flex;
+  gap: 1.1rem;
+}
+
+.footer-bottom-links a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.footer-bottom-links a:hover {
+  color: var(--yellow);
+}

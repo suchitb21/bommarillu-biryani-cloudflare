@@ -77,9 +77,16 @@ export function Footer() {
         <div className="footer-col">
           <h4>Visit Us</h4>
           <div className="footer-hours">
-            Open Daily
+            <span className="footer-hours-title">Open (Pacific)</span>
+            Mon 11 AM &ndash; 10 PM
             <br />
-            11:55 AM &ndash; 10:44 PM
+            Tue&ndash;Thu 11 AM &ndash; 2:30 PM,
+            <br />
+            &ensp;4:30 PM &ndash; 10 PM
+            <br />
+            Fri&ndash;Sat 11 AM &ndash; 10:45 PM
+            <br />
+            Sun 11 AM &ndash; 10 PM
           </div>
           <Link href="/#faq">Common Questions</Link>
         </div>
@@ -103,6 +110,10 @@ export function Footer() {
 
       <div className="footer-bottom">
         <span>&copy; 2026 Bommarillu Biryani. All rights reserved.</span>
+        <span className="footer-bottom-links">
+          <Link href="/terms">Terms &amp; Conditions</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+        </span>
         <span>Made with &hearts; for real dum biryani.</span>
       </div>
     </footer>

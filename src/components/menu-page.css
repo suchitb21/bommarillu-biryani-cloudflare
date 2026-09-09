@@ -159,3 +159,30 @@
     background-position: -200% 0;
   }
 }
+
+/* Delivery note strip shown above the Order Online menu - delivery is
+ * handled on the restaurant's Cash App / Square ordering profile (which can
+ * dispatch a courier), so this site is pickup + catering. */
+.menu-page-delivery-note {
+  background: var(--green-dark);
+  color: #fff;
+  text-align: center;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.menu-page-delivery-note p {
+  margin: 0;
+}
+
+.menu-page-delivery-note a {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.menu-page-delivery-note a:hover {
+  color: var(--yellow);
+}

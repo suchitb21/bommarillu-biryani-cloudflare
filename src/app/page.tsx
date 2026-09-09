@@ -1,9 +1,11 @@
 import Link from "next/link";
 import "./home.css";
+import { OrderEntryModal } from "@/components/order-entry-modal";
 
 export default function Home() {
   return (
     <>
+      <OrderEntryModal />
       <section className="hero">
         {/* decorative dots */}
         <div className="dot dot--orange" style={{ width: 8, height: 8, top: "14%", left: "52%" }} />

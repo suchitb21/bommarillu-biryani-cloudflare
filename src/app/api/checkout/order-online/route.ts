@@ -4,8 +4,14 @@ import { todayInRestaurantTimeZone, zonedDateTimeToUtc } from "@/lib/time-slots"
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the /cart checkout form uses to build its slot list.
-const MIN_LEAD_MINUTES = 45;
+const MIN_LEAD_MINUTES = 20;
 
+/**
+ * Order Online is pickup-only on this site. Delivery is handled on the
+ * restaurant's Cash App / Square ordering profile (the only surface that can
+ * dispatch a courier) and never reaches this endpoint - see
+ * src/lib/delivery.ts. This endpoint therefore always builds a PICKUP order.
+ */
 export async function POST(request: NextRequest): Promise<NextResponse<CheckoutResponse>> {
   let body: OrderOnlineCheckoutRequest;
   try {
@@ -23,8 +29,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   if (!body.timeSlot) {
     return NextResponse.json({ ok: false, error: "Please choose a time." }, { status: 400 });
   }
-  if (body.fulfillmentMethod === "delivery" && !body.address) {
-    return NextResponse.json({ ok: false, error: "Delivery address is required." }, { status: 400 });
+  // Defense in depth: this endpoint must never create a delivery order. A
+  // tampered client sending "delivery" is told where delivery actually
+  // lives instead.
+  const requestedMethod: string = body.fulfillmentMethod;
+  if (requestedMethod !== "pickup") {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Delivery orders are placed on our delivery ordering page - this checkout is for pickup only.",
+      },
+      { status: 400 }
+    );
   }
 
   const dateStr = todayInRestaurantTimeZone();
@@ -44,13 +61,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       lines: body.lines,
       name: body.name,
       phone: body.phone,
-      fulfillmentMethod: body.fulfillmentMethod,
-      address: body.address,
+      fulfillmentMethod: "pickup",
       dateStr,
       timeStr: body.timeSlot,
-      // Order Online is enrolled in Square's real On-Demand Delivery.
-      allowOnDemandDelivery: true,
       noteContext: "Order Online",
+      channel: "order-online",
       redirectUrl: `${request.nextUrl.origin}/order-confirmation`,
     });
     return NextResponse.json({ ok: true, url });

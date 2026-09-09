@@ -45,11 +45,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       address: body.address,
       dateStr: body.eventDate,
       timeStr: body.timeSlot,
-      // Catering orders are too large for Square's on-demand courier
-      // partners - fulfillment stays PICKUP even for "delivery" catering
-      // orders; the restaurant arranges delivery manually (see design.md).
-      allowOnDemandDelivery: false,
+      // Catering "delivery" stays a PICKUP fulfillment with the address on
+      // the recipient and in the note - Square's courier dispatch is not
+      // available for API-created orders (see src/lib/delivery.ts), and
+      // catering orders are too large for courier partners anyway. Staff
+      // arrange the delivery themselves.
       noteContext: "Catering order",
+      channel: "catering",
       redirectUrl: `${request.nextUrl.origin}/order-confirmation`,
     });
     return NextResponse.json({ ok: true, url });

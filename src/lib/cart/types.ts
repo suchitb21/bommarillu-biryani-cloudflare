@@ -9,8 +9,9 @@ export type CartLineModifier = {
  * separate catalogs with separate item/variation ids and separate pricing
  * (see design.md) - this just carries a human-readable label through the
  * cart so the same-named dish from each isn't indistinguishable in the UI.
- * At checkout (Phase 5) this maps onto `OrderLineItem.metadata`, which
- * Square's Orders API reserves exactly for this kind of app-defined tag.
+ * It is not sent to Square per line item: the two carts can never mix, so
+ * checkout distinguishes the two flows with order-level metadata instead
+ * (`metadata.channel`, see src/lib/checkout/types.ts and build-order.ts).
  */
 export type CartSource = "menu" | "catering";
 

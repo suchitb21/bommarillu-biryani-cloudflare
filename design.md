@@ -159,21 +159,26 @@ the API) carries this, not the payment itself:
   guide page that only called out `display_name` as strictly required for
   pickup - collecting it ourselves avoids depending on which of those two
   is actually authoritative).
-- **DELIVERY** (`delivery_details`): same recipient shape plus `address`,
-  and is Square's real **On-Demand Delivery** - it dispatches to one of
-  Square's courier partners. This requires the seller's account to be
-  enrolled ("First-Party Delivery"); confirmed Bommarillu Biryani's account
-  has it enabled, so **Order Online** uses real `type: "DELIVERY"` for its
-  delivery option.
-- **Catering "delivery" deliberately does not use `DELIVERY` fulfillment.**
-  Per the restaurant: catering orders are too large for Square's courier
-  partners, and delivery is arranged by staff directly. So a catering order
-  with delivery chosen still gets `type: "PICKUP"` in Square, but with the
-  delivery address attached to `pickup_details.recipient.address` (a
-  structured field staff can see) *and* spelled out in `pickup_details.note`
-  (free text - both `pickup_details.note` and
-  `delivery_details.dropoff_notes` exist specifically for this) - "as
-  required" (structured) and "as text" (note), per what was asked for.
+- **DELIVERY (`delivery_details`) is not used at all.** Researched against
+  Square's docs and Square-staff answers (2026): Square's managed courier
+  dispatch (DoorDash / Uber Eats / Nash) only runs inside Square's own
+  hosted ordering surfaces - creating a `DELIVERY` fulfillment through the
+  Orders API never dispatches a courier, and the fulfillment type itself is
+  gated to partner apps (an unenrolled app gets HTTP 200 but the order is
+  invisible to the seller in Order Manager/POS). So **Order Online "delivery"
+  is not offered on this site**: customers who want delivery are redirected
+  to the restaurant's online ordering profile (the `cash.app` storefront
+  Square builds automatically from the catalog; `src/lib/delivery.ts`),
+  where dispatch actually works. Order Online on this site is pickup-only.
+- **Catering "delivery" also stays `type: "PICKUP"`.** Delivery for catering
+  orders is arranged by staff directly (orders are too large for courier
+  partners), and API-created `DELIVERY` fulfillments would not dispatch a
+  courier anyway (see above). A catering order with delivery chosen gets
+  `type: "PICKUP"` in Square, with the delivery address attached to
+  `pickup_details.recipient.address` (a structured field staff can see)
+  *and* spelled out in `pickup_details.note` (free text) as
+  "CATERING DELIVERY (restaurant-arranged) to: ..." - "as required"
+  (structured) and "as text" (note), per what was asked for.
 - Built in `src/lib/checkout/build-order.ts` (`buildFulfillment`).
 
 ## Money: never trust the client
@@ -203,9 +208,13 @@ themselves and reject anything that's no longer far enough in the future
 slot chosen minutes ago could already be stale by the time the request
 lands).
 
-Lead times (adjustable, currently): Order Online 45 minutes, Catering 24
-hours. Business hours used for the slot list: 11:55 AM-10:44 PM (from the
-site footer), 30-minute increments.
+Lead times (adjustable, currently): Order Online pickup 20 minutes,
+Catering 24 hours. Business hours used for the slot list: 11:55 AM-10:44 PM
+(from the site footer), 30-minute increments. Both are enforced only by
+this site's server code (`src/lib/time-slots.ts` + the checkout route
+handlers) - Square's own dashboard lead-time/timing settings only govern its
+hosted ordering surfaces and do not gate Orders API orders, which Square
+accepts for any future `pickup_at` (it only rejects times in the past).
 
 ## Order creation flow (`src/lib/checkout/build-order.ts`)
 
@@ -220,6 +229,12 @@ This was chosen over the simpler, more clearly-documented one-call version
 (embed a brand new `Order` object directly in `paymentLinks.create`) so the
 real `order.id` is known *before* building `redirectUrl`, letting the
 confirmation page look up the exact order without any ambiguity.
+
+Every order also carries order-level `metadata: { channel: "order-online" |
+"catering" }` (set by whichever checkout route called `createCheckout`), so
+staff can tell the two flows apart in the Square Dashboard without parsing
+the fulfillment note - the note stays human-readable prose. `reference_id`
+remains an opaque per-order UUID.
 
 **Caveat, since this wasn't live-tested end-to-end (see below):** passing
 `order: { id, locationId, version }` to reference an already-created order

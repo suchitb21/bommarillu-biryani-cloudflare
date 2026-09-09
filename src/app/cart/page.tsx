@@ -7,6 +7,7 @@ import { useOrderOnlineCart } from "@/lib/cart/cart-context";
 import { lineTotalCents, type CartLine } from "@/lib/cart/types";
 import { CheckoutForm, type CheckoutFormValues } from "@/components/checkout-form";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
+import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
 
 function formatMoney(cents: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -16,11 +17,13 @@ export default function CartPage() {
   const cart = useOrderOnlineCart();
 
   async function handleCheckout(values: CheckoutFormValues) {
+    // Order Online is pickup-only on this site - delivery redirects to the
+    // Cash App ordering page (externalDeliveryHref above), so the server is
+    // only ever asked for a pickup.
     const body: OrderOnlineCheckoutRequest = {
       name: values.name,
       phone: values.phone,
-      fulfillmentMethod: values.fulfillmentMethod,
-      address: values.address,
+      fulfillmentMethod: "pickup",
       timeSlot: values.timeSlot,
       lines: cart.lines,
     };
@@ -67,8 +70,8 @@ export default function CartPage() {
 
             <CheckoutForm
               showEventDate={false}
-              minLeadMinutes={45}
-              deliveryHelpText="Delivered by Square's on-demand courier partners."
+              minLeadMinutes={20}
+              externalDeliveryHref={DELIVERY_ORDERING_URL}
               submitLabel="Pay now"
               totalCents={cart.totalCents}
               onSubmit={handleCheckout}

@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { getSquareClient, getSquareLocationId } from "@/lib/square/client";
 import { zonedDateTimeToUtc } from "@/lib/time-slots";
 import type { CartLine } from "@/lib/cart/types";
-import type { CheckoutAddress, FulfillmentMethod } from "./types";
+import type { CheckoutAddress, CheckoutChannel, FulfillmentMethod } from "./types";
 
 /**
  * Line items reference the real, live catalog by id and let Square resolve
@@ -51,56 +51,39 @@ type BuildFulfillmentArgs = {
   name: string;
   phone: string;
   fulfillmentMethod: FulfillmentMethod;
+  /** Catering "delivery" only - captured for staff to arrange delivery. */
   address?: CheckoutAddress;
   dateStr: string;
   timeStr: string;
-  /** true = real Square On-Demand Delivery dispatch. false = fulfillment
-   * type stays PICKUP even when the customer chose delivery, with the
-   * address/time captured only as structured recipient data + a note for
-   * staff to arrange manually (used for Catering, per restaurant policy -
-   * their orders are too large for Square's courier partners). */
-  allowOnDemandDelivery: boolean;
   noteContext: string;
 };
 
-/** Builds the single Fulfillment allowed on an order created via the API. */
+/**
+ * Every order created here gets exactly one PICKUP fulfillment (the Orders
+ * API allows at most one fulfillment per created order, and Square's managed
+ * courier dispatch does not exist for API-created orders anyway - see
+ * src/lib/delivery.ts). Order Online is pickup-only; a catering order where
+ * the customer chose "delivery" stays a PICKUP with the delivery address on
+ * the recipient and spelled out in the note, so staff can arrange it
+ * themselves (catering orders are too large for courier partners).
+ */
 function buildFulfillment(args: BuildFulfillmentArgs): Square.Fulfillment {
-  const { name, phone, fulfillmentMethod, address, dateStr, timeStr, allowOnDemandDelivery, noteContext } = args;
+  const { name, phone, fulfillmentMethod, address, dateStr, timeStr, noteContext } = args;
   const whenLabel = formatSlotForNote(dateStr, timeStr);
   const instant = zonedDateTimeToUtc(dateStr, timeStr).toISOString();
 
   const isDelivery = fulfillmentMethod === "delivery";
-  const useSquareDelivery = isDelivery && allowOnDemandDelivery;
-
   const addressLine = address
     ? `${address.addressLine1}${address.addressLine2 ? ", " + address.addressLine2 : ""}, ${address.city}, ${address.state} ${address.postalCode}`
     : null;
 
   const noteParts = [noteContext, `Requested: ${whenLabel}`];
   if (isDelivery && addressLine) {
-    noteParts.push(
-      useSquareDelivery ? `Deliver to: ${addressLine}` : `CATERING DELIVERY (restaurant-arranged) to: ${addressLine}`
-    );
+    noteParts.push(`CATERING DELIVERY (restaurant-arranged) to: ${addressLine}`);
   } else {
     noteParts.push("Pickup at the restaurant");
   }
   const note = noteParts.join(" | ").slice(0, 500);
-
-  if (useSquareDelivery) {
-    return {
-      type: "DELIVERY",
-      deliveryDetails: {
-        recipient: {
-          displayName: name,
-          phoneNumber: phone,
-          address: address ? buildAddress(address) : undefined,
-        },
-        scheduleType: "SCHEDULED",
-        deliverAt: instant,
-        dropoffNotes: note,
-      },
-    };
-  }
 
   return {
     type: "PICKUP",
@@ -108,7 +91,7 @@ function buildFulfillment(args: BuildFulfillmentArgs): Square.Fulfillment {
       recipient: {
         displayName: name,
         phoneNumber: phone,
-        address: !useSquareDelivery && isDelivery && address ? buildAddress(address) : undefined,
+        address: isDelivery && address ? buildAddress(address) : undefined,
       },
       scheduleType: "SCHEDULED",
       pickupAt: instant,
@@ -125,8 +108,10 @@ export type CreateCheckoutArgs = {
   address?: CheckoutAddress;
   dateStr: string;
   timeStr: string;
-  allowOnDemandDelivery: boolean;
   noteContext: string;
+  /** Structured channel tag, written to `order.metadata.channel`. The prose
+   * `noteContext` above is only ever used for the fulfillment note. */
+  channel: CheckoutChannel;
   redirectUrl: string;
 };
 
@@ -139,6 +124,7 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
   const order: Square.Order = {
     locationId,
     referenceId: randomUUID(),
+    metadata: { channel: args.channel },
     lineItems: buildLineItems(args.lines),
     fulfillments: [fulfillment],
   };

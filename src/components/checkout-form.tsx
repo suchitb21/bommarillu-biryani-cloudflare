@@ -26,6 +26,7 @@ export function CheckoutForm({
   showEventDate,
   minLeadMinutes,
   deliveryHelpText,
+  externalDeliveryHref,
   submitLabel,
   totalCents,
   onSubmit,
@@ -34,7 +35,15 @@ export function CheckoutForm({
    * always ordering for today. */
   showEventDate: boolean;
   minLeadMinutes: number;
+  /** Shown under the method toggle when in-form delivery is available
+   * (catering: delivery is staff-arranged). Ignored when
+   * `externalDeliveryHref` is set. */
   deliveryHelpText?: string;
+  /** Order Online only. When set, delivery is NOT collected in this form -
+   * the Delivery button opens this URL (the Cash App / Square ordering
+   * profile, the only surface that can dispatch a courier) in a new tab,
+   * and this checkout handles pickup only. */
+  externalDeliveryHref?: string;
   submitLabel: string;
   totalCents: number;
   onSubmit: (values: CheckoutFormValues) => Promise<void>;
@@ -67,6 +76,10 @@ export function CheckoutForm({
   const selectedTimeSlot = slots.some((slot) => slot.value === timeSlot) ? timeSlot : (slots[0]?.value ?? "");
 
   const minEventDate = showEventDate ? earliestDateForLeadTime(minLeadMinutes) : undefined;
+
+  // Order Online: delivery lives on the Cash App / Square ordering profile,
+  // so when externalDeliveryHref is set the only in-form method is pickup.
+  const hasExternalDelivery = Boolean(externalDeliveryHref);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -146,19 +159,34 @@ export function CheckoutForm({
           >
             Pickup
           </button>
-          <button
-            type="button"
-            className={
-              fulfillmentMethod === "delivery"
-                ? "checkout-method-btn checkout-method-btn--active"
-                : "checkout-method-btn"
-            }
-            onClick={() => setFulfillmentMethod("delivery")}
-          >
-            Delivery
-          </button>
+          {externalDeliveryHref ? (
+            <button
+              type="button"
+              className="checkout-method-btn"
+              onClick={() => window.open(externalDeliveryHref, "_blank", "noopener")}
+            >
+              Delivery
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={
+                fulfillmentMethod === "delivery"
+                  ? "checkout-method-btn checkout-method-btn--active"
+                  : "checkout-method-btn"
+              }
+              onClick={() => setFulfillmentMethod("delivery")}
+            >
+              Delivery
+            </button>
+          )}
         </div>
-        {fulfillmentMethod === "delivery" && deliveryHelpText ? (
+        {externalDeliveryHref ? (
+          <p className="checkout-help">
+            Delivery orders are placed on our delivery ordering page so a courier can be
+            dispatched &mdash; same menu and prices. This form is for pickup.
+          </p>
+        ) : fulfillmentMethod === "delivery" && deliveryHelpText ? (
           <p className="checkout-help">{deliveryHelpText}</p>
         ) : null}
       </div>
@@ -236,7 +264,9 @@ export function CheckoutForm({
       ) : null}
 
       <div className="checkout-field">
-        <label htmlFor="checkout-time">{showEventDate ? "Event time" : "Pickup/delivery time"} (Pacific)</label>
+        <label htmlFor="checkout-time">
+          {showEventDate ? "Event time" : hasExternalDelivery ? "Pickup time" : "Pickup/delivery time"} (Pacific)
+        </label>
         {slots.length === 0 ? (
           <p className="checkout-no-slots">No times available for that date - please call us.</p>
         ) : (

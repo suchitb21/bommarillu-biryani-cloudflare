@@ -1,6 +1,17 @@
 import type { CartLine } from "@/lib/cart/types";
 
+/** Which fulfillment the order is created with. "delivery" is Catering-only:
+ * catering delivery is staff-arranged and is still created as a PICKUP
+ * fulfillment with the address captured for staff. Order Online is
+ * pickup-only on this site - its delivery redirects to the Cash App /
+ * Square ordering profile (see src/lib/delivery.ts). */
 export type FulfillmentMethod = "pickup" | "delivery";
+
+/** Which checkout flow created the order. Written to every order as
+ * order-level `metadata.channel` so staff can tell the two flows apart in
+ * the Square Dashboard without parsing the fulfillment note (which stays
+ * human-readable prose - see noteContext in build-order.ts). */
+export type CheckoutChannel = "order-online" | "catering";
 
 export type CheckoutAddress = {
   addressLine1: string;
@@ -13,9 +24,10 @@ export type CheckoutAddress = {
 export type OrderOnlineCheckoutRequest = {
   name: string;
   phone: string;
-  fulfillmentMethod: FulfillmentMethod;
-  /** Required when fulfillmentMethod is "delivery". */
-  address?: CheckoutAddress;
+  /** Always "pickup" - Order Online delivery redirects to the restaurant's
+   * Cash App / Square ordering profile (see src/lib/delivery.ts), so this
+   * endpoint never receives a delivery order. */
+  fulfillmentMethod: "pickup";
   /** "HH:mm", always Pacific time - the date is always today, computed
    * server-side (never trust the client for "what day is it"). */
   timeSlot: string;

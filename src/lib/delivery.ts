@@ -10,7 +10,7 @@
  * merchant already takes delivery orders.
  *
  * This site therefore handles: Order Online *pickup* (the "Menu" catalog,
- * full custom checkout) and Catering (the "Catering-BB" catalog). Any
+ * full custom checkout) and Catering (the "Catering" catalog). Any
  * "delivery" intent surfaces this URL. See design.md.
  */
 export const DELIVERY_ORDERING_URL =

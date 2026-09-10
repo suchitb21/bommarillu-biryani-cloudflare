@@ -188,7 +188,7 @@ function toMenuItemView(
 
 /**
  * Resolves a top-level Menu (a CATEGORY object with categoryType MENU_CATEGORY
- * and isTopLevel true, e.g. "Menu" or "Catering-BB") by name, along with its
+ * and isTopLevel true, e.g. "Menu" or "Catering") by name, along with its
  * Menu Groups and their items.
  *
  * This still reads the *structure* live from Square (no hardcoded category/item

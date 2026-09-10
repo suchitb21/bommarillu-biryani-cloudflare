@@ -5,7 +5,7 @@ export type CartLineModifier = {
 };
 
 /**
- * Which Square Menu the item was added from. "Menu" and "Catering-BB" are
+ * Which Square Menu the item was added from. "Menu" and "Catering" are
  * separate catalogs with separate item/variation ids and separate pricing
  * (see design.md) - this just carries a human-readable label through the
  * cart so the same-named dish from each isn't indistinguishable in the UI.

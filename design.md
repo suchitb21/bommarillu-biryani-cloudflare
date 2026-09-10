@@ -43,7 +43,7 @@ This still reads the menu *structure* live from Square by name every time the
 underlying fetch actually runs (no hardcoded category/item ids - see the
 gotchas in the original build prompt) - what's cached is the *result* of that
 read, not the ids themselves. Both `getMenuByName("Menu")` and
-`getMenuByName("Catering-BB")` are cached independently (the menu name is
+`getMenuByName("Catering")` are cached independently (the menu name is
 part of `unstable_cache`'s automatic argument-based cache key).
 
 Measured effect in dev: first request after a cold cache ~1.5s (real Square
@@ -119,7 +119,7 @@ this project adopts Cache Components for other reasons.
 
 ## Why two separate carts, not one
 
-Order Online (the "Menu" catalog) and Catering (the "Catering-BB" catalog)
+Order Online (the "Menu" catalog) and Catering (the "Catering" catalog)
 are different Square catalogs with different item ids and pricing even for
 identically-named dishes (confirmed empirically against production - e.g.
 "Butter Naan" exists as 3 distinct `ITEM` ids across the account's

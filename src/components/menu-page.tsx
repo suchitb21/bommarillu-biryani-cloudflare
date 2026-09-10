@@ -4,7 +4,7 @@ import { getMenuByName } from "@/lib/square/menu";
 import type { CartSource } from "@/lib/cart/types";
 
 // Shared between /order-online (the "Menu" Menu) and /catering (the
-// "Catering-BB" Menu) - only the menu name and header copy differ.
+// "Catering" Menu) - only the menu name and header copy differ.
 export async function MenuPage({
   menuName,
   title,

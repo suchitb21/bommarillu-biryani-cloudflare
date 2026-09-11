@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import "./contact.css";
 
 const WEEKDAY_NAMES = [
@@ -32,6 +32,9 @@ const HOURS_ROWS = [
   { day: "Friday", times: ["11:00 AM – 3:00 PM", "4:00 PM – 10:00 PM"] },
   { day: "Saturday", times: ["11:00 AM – 3:00 PM", "4:00 PM – 10:00 PM"] },
 ];
+
+const EMPTY_CONTACT_FORM = { name: "", email: "", phone: "", message: "" };
+type ContactForm = typeof EMPTY_CONTACT_FORM;
 
 function getPacificNow() {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -67,6 +70,50 @@ export default function ContactPage() {
     setStatus({ dayIdx, isOpen });
   }, []);
 
+  const [form, setForm] = useState<ContactForm>(EMPTY_CONTACT_FORM);
+  const [submitState, setSubmitState] = useState<
+    | { status: "idle" }
+    | { status: "submitting" }
+    | { status: "success" }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  function updateField(field: keyof ContactForm, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (submitState.status === "submitting") return;
+
+    setSubmitState({ status: "submitting" });
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        setSubmitState({
+          status: "error",
+          message: data?.error ?? "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      setForm(EMPTY_CONTACT_FORM);
+      setSubmitState({ status: "success" });
+    } catch {
+      setSubmitState({
+        status: "error",
+        message: "Network error — please check your connection and try again.",
+      });
+    }
+  }
+
   const todayLabel = status ? HOURS_DATA[status.dayIdx].label : null;
   const badgeText = status ? (status.isOpen ? "Open Now" : "Closed Now") : "Checking hours…";
   const badgeClass = status ? (status.isOpen ? "is-open" : "is-closed") : "";
@@ -98,17 +145,72 @@ export default function ContactPage() {
 
       <section className="contact-form-section">
         <div className="contact-grid">
-          <div className="form-card">
+          <form className="form-card" onSubmit={handleSubmit}>
             <div className="form-row">
-              <input className="form-field" type="email" placeholder="Email" style={{ marginBottom: 0 }} />
-              <input className="form-field" type="tel" placeholder="Phone" style={{ marginBottom: 0 }} />
+              <input
+                className="form-field"
+                type="email"
+                name="email"
+                placeholder="Email"
+                aria-label="Email"
+                autoComplete="email"
+                required
+                style={{ marginBottom: 0 }}
+                value={form.email}
+                onChange={(e) => updateField("email", e.target.value)}
+              />
+              <input
+                className="form-field"
+                type="tel"
+                name="phone"
+                placeholder="Phone"
+                aria-label="Phone"
+                autoComplete="tel"
+                style={{ marginBottom: 0 }}
+                value={form.phone}
+                onChange={(e) => updateField("phone", e.target.value)}
+              />
             </div>
-            <input className="form-field" type="text" placeholder="Name" />
-            <textarea className="form-field" placeholder="Message" />
-            <button type="button" className="btn-pill form-submit-btn">
-              Submit
+            <input
+              className="form-field"
+              type="text"
+              name="name"
+              placeholder="Name"
+              aria-label="Name"
+              autoComplete="name"
+              required
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+            />
+            <textarea
+              className="form-field"
+              name="message"
+              placeholder="Message"
+              aria-label="Message"
+              required
+              value={form.message}
+              onChange={(e) => updateField("message", e.target.value)}
+            />
+            <button
+              type="submit"
+              className="btn-pill form-submit-btn"
+              disabled={submitState.status === "submitting"}
+            >
+              {submitState.status === "submitting" ? "Sending…" : "Submit"}
             </button>
-          </div>
+
+            {submitState.status === "success" && (
+              <p className="form-feedback form-feedback--success" role="status">
+                Thanks for reaching out — we&rsquo;ve got your message and will
+                get back to you soon.
+              </p>
+            )}
+            {submitState.status === "error" && (
+              <p className="form-feedback form-feedback--error" role="alert">
+                {submitState.message}
+              </p>
+            )}
+          </form>
 
           <div className="newsletter-card">
             <svg className="newsletter-leaf" viewBox="0 0 170 170" fill="none">

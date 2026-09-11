@@ -111,6 +111,21 @@ textarea.form-field {
 .form-submit-btn {
   margin-top: 0.25rem;
 }
+.form-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.form-feedback {
+  margin: 0.9rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.form-feedback--success {
+  color: #2f7d4f;
+}
+.form-feedback--error {
+  color: var(--destructive);
+}
 
 .newsletter-card {
   position: relative;

@@ -1,6 +1,7 @@
 import "server-only";
 import type { Square } from "square";
 import { getSquareClient, getSquareLocationId } from "@/lib/square/client";
+import { getPortalSourceName } from "@/lib/square/config";
 import { getOrderLookbackDays } from "@/lib/admin/config";
 import type {
   AdminOrderItemView,
@@ -12,10 +13,14 @@ import type {
 /**
  * Reads the orders this website created out of Square.
  *
- * Square is the system of record, so there is no local orders table yet -
- * Phase 2 replaces this scan with a Postgres mirror fed by webhooks. Until
- * then the cost of a live read is bounded by only scanning back over a
- * configured window and caching the result briefly.
+ * Square is the system of record, so there is no local orders table. The read
+ * is narrowed server-side by a source-name allowlist (see getPortalSourceName),
+ * which is what keeps this cheap: filtering afterwards in our own code meant
+ * downloading every order at the location first.
+ *
+ * Catering vs. online ordering is then decided from `metadata.channel`, since
+ * both flows share one Square application name and cannot be told apart by
+ * source.
  */
 
 const PAGE_LIMIT = 500;
@@ -62,7 +67,10 @@ type RawPortalOrder = {
 
 type RawPortalOrderResult = {
   orders: RawPortalOrder[];
-  skippedUnsettled: number;
+  /** Counted per channel so each page reports only its own hidden orders. */
+  skippedUnsettledByChannel: Record<PortalChannel, number>;
+  /** Orders from our app that carry no metadata.channel - see readChannel. */
+  unclassified: number;
   scannedOrders: number;
 };
 
@@ -83,29 +91,20 @@ function toCents(money: Square.Money | undefined): number {
   return Number(money?.amount ?? 0);
 }
 
-function fulfillmentNote(order: Square.Order): string {
-  return (order.fulfillments ?? [])
-    .map((fulfillment) => fulfillment.pickupDetails?.note ?? "")
-    .join(" ");
-}
-
 /**
- * Decides whether an order came from this website, and from which flow.
+ * Which of our two flows created the order.
  *
- * `metadata.channel` is the structured marker every checkout writes. Orders
- * created before that field existed (see the history of build-order.ts) carry
- * only the prose note, so the note is checked as a fallback. A Square
- * Dashboard order has neither, which is exactly what keeps those out.
+ * `metadata.channel` is written by our own checkout, and Square metadata is
+ * private to the application that wrote it - so it cannot have been set by the
+ * POS, DoorDash, or anyone else. An order that arrives without it therefore
+ * came from our app but predates the tag; the caller counts those separately
+ * rather than guessing from prose or silently dropping them.
  */
 function readChannel(order: Square.Order): PortalChannel | null {
   const metadataChannel = order.metadata?.channel;
   if (metadataChannel === "order-online" || metadataChannel === "catering") {
     return metadataChannel;
   }
-
-  const note = fulfillmentNote(order);
-  if (note.includes("Catering order")) return "catering";
-  if (note.includes("Order Online")) return "order-online";
 
   return null;
 }
@@ -178,7 +177,15 @@ async function scanSquareOrders(): Promise<RawPortalOrderResult> {
     locationIds: [locationId],
     limit: PAGE_LIMIT,
     query: {
-      filter: { dateTimeFilter: { createdAt: { startAt } } },
+      filter: {
+        dateTimeFilter: { createdAt: { startAt } },
+        // Server-side allowlist. Without this the endpoint returns every order
+        // at the location - measured at 17,369 orders / 35 pages / ~39s for a
+        // 90-day window - of which only a handful are ours. Square ANDs this
+        // with the date filter, so POS, DoorDash, UberEats, Grubhub and Square
+        // Online orders never leave Square's servers.
+        sourceFilter: { sourceNames: [getPortalSourceName()] },
+      },
       sort: { sortField: "CREATED_AT", sortOrder: "DESC" },
     },
   } satisfies Square.SearchOrdersRequest;
@@ -195,20 +202,39 @@ async function scanSquareOrders(): Promise<RawPortalOrderResult> {
   } while (cursor && pages < MAX_PAGES);
 
   const orders: RawPortalOrder[] = [];
-  let skippedUnsettled = 0;
+  const skippedUnsettledByChannel: Record<PortalChannel, number> = {
+    "order-online": 0,
+    catering: 0,
+  };
+  let unclassified = 0;
 
   for (const order of scanned) {
-    const channel = readChannel(order);
-    if (!channel) continue; // Not from our portal.
     if (order.state === "CANCELED") continue;
-    if (!isSettled(order)) {
-      skippedUnsettled += 1;
+
+    // The source filter has already established this order is ours, so a
+    // missing channel does not mean "not ours" - it means an untagged order of
+    // ours. Count those rather than guessing a channel (which could misfile an
+    // order onto the wrong page) or dropping them silently.
+    const channel = readChannel(order);
+    if (!channel) {
+      unclassified += 1;
       continue;
     }
+
+    if (!isSettled(order)) {
+      skippedUnsettledByChannel[channel] += 1;
+      continue;
+    }
+
     orders.push(toRawPortalOrder(order, channel));
   }
 
-  return { orders, skippedUnsettled, scannedOrders: scanned.length };
+  return {
+    orders,
+    skippedUnsettledByChannel,
+    unclassified,
+    scannedOrders: scanned.length,
+  };
 }
 
 /**
@@ -257,7 +283,7 @@ function toView(order: RawPortalOrder): AdminOrderView {
 export async function getPortalOrderSummary(
   channel: PortalChannel
 ): Promise<PortalOrderSummary> {
-  const { orders, skippedUnsettled, scannedOrders } =
+  const { orders, skippedUnsettledByChannel, unclassified, scannedOrders } =
     await listRawPortalOrders();
 
   const now = Date.now();
@@ -274,7 +300,8 @@ export async function getPortalOrderSummary(
   return {
     upcoming: upcoming.map(toView),
     completed: completed.map(toView),
-    skippedUnsettled,
+    skippedUnsettled: skippedUnsettledByChannel[channel],
+    unclassified,
     lookbackDays: getOrderLookbackDays(),
     scannedOrders,
   };

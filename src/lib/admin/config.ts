@@ -18,8 +18,15 @@ const isProduction = process.env.NODE_ENV === "production";
  */
 export const SESSION_COOKIE_NAME = isProduction ? "__Host-bb_admin" : "bb_admin";
 
-/** Days of Square order history the dashboard scans back over. */
-const DEFAULT_ORDER_LOOKBACK_DAYS = 90;
+/**
+ * Days of Square order history the dashboard scans back over.
+ *
+ * 365 rather than something tighter because catering is booked in advance: an
+ * event placed more than 90 days ahead would fall outside a shorter window and
+ * silently vanish from "Upcoming". With the server-side source filter this
+ * window costs a single page, so the extra reach is nearly free.
+ */
+const DEFAULT_ORDER_LOOKBACK_DAYS = 365;
 const MAX_ORDER_LOOKBACK_DAYS = 365;
 
 export function getAdminPasswordHash(): string {

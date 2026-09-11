@@ -60,7 +60,7 @@ export async function AdminOrdersSection({
     );
   }
 
-  const { upcoming, completed, skippedUnsettled, lookbackDays, scannedOrders } =
+  const { upcoming, completed, skippedUnsettled, unclassified, lookbackDays, scannedOrders } =
     summary;
 
   return (
@@ -76,12 +76,17 @@ export async function AdminOrdersSection({
       />
 
       <p className="admin-footnote">
-        Scanned {scannedOrders} Square order{scannedOrders === 1 ? "" : "s"} from
-        the last {lookbackDays} days.
+        Scanned {scannedOrders} of our Square order
+        {scannedOrders === 1 ? "" : "s"} from the last {lookbackDays} days.
         {skippedUnsettled > 0
           ? ` ${skippedUnsettled} unpaid/abandoned checkout${
               skippedUnsettled === 1 ? "" : "s"
             } hidden.`
+          : ""}
+        {unclassified > 0
+          ? ` ${unclassified} order${
+              unclassified === 1 ? "" : "s"
+            } could not be classified and appear on neither page.`
           : ""}
       </p>
     </>

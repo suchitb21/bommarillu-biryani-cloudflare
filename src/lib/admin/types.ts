@@ -39,8 +39,10 @@ export type PortalOrderSummary = {
   completed: AdminOrderView[];
   /** Portal orders found but not yet paid (abandoned checkouts). */
   skippedUnsettled: number;
+  /** Orders from this app that carry no metadata.channel, so their flow is unknown. */
+  unclassified: number;
   /** How many days of Square history were scanned. */
   lookbackDays: number;
-  /** Total orders Square returned in the window, before portal filtering. */
+  /** Orders Square returned after the server-side source filter. */
   scannedOrders: number;
 };

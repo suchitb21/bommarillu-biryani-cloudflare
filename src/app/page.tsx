@@ -202,7 +202,7 @@ export default function Home() {
 
               <img
                 className="dish-photo"
-                src="/images/biryani.png"
+                src="/images/biryani.webp"
                 alt="Bommarillu chicken biryani served in a bowl with fried onions, cashews and mint"
               />
 

@@ -197,6 +197,26 @@ textarea.form-field {
 .newsletter-submit-btn:hover {
   transform: translateY(-2px);
 }
+.newsletter-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+/* Feedback sits on the dark brown card, so the usual dark-on-light colours
+   would be unreadable here. */
+.newsletter-feedback {
+  position: relative;
+  z-index: 2;
+  margin: 0.85rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.newsletter-feedback--success {
+  color: #9ce0b0;
+}
+.newsletter-feedback--error {
+  color: #ffb4a8;
+}
 
 /* ===================== GET IN TOUCH ===================== */
 .info-section {

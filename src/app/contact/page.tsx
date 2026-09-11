@@ -114,6 +114,53 @@ export default function ContactPage() {
     }
   }
 
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterState, setNewsletterState] = useState<
+    | { status: "idle" }
+    | { status: "submitting" }
+    | { status: "success"; message: string }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  async function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (newsletterState.status === "submitting") return;
+
+    setNewsletterState({ status: "submitting" });
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        setNewsletterState({
+          status: "error",
+          message: data?.error ?? "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      setNewsletterEmail("");
+      // Signing up twice is not an error, so say so plainly instead of
+      // implying a fresh signup that did not happen.
+      setNewsletterState({
+        status: "success",
+        message: data.alreadySubscribed
+          ? "You're already on the list — thank you!"
+          : "Thanks for subscribing!",
+      });
+    } catch {
+      setNewsletterState({
+        status: "error",
+        message: "Network error — please check your connection and try again.",
+      });
+    }
+  }
+
   const todayLabel = status ? HOURS_DATA[status.dayIdx].label : null;
   const badgeText = status ? (status.isOpen ? "Open Now" : "Closed Now") : "Checking hours…";
   const badgeClass = status ? (status.isOpen ? "is-open" : "is-closed") : "";
@@ -228,10 +275,45 @@ export default function ContactPage() {
               Be the first to know about new menu items, weekend specials, and
               exclusive offers — straight to your inbox.
             </p>
-            <input className="newsletter-field" type="email" placeholder="Email" />
-            <button type="button" className="newsletter-submit-btn">
-              Submit
-            </button>
+            <form onSubmit={handleNewsletterSubmit}>
+              <input
+                className="newsletter-field"
+                type="email"
+                name="email"
+                placeholder="Email"
+                aria-label="Email address for the newsletter"
+                autoComplete="email"
+                required
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="newsletter-submit-btn"
+                disabled={newsletterState.status === "submitting"}
+              >
+                {newsletterState.status === "submitting"
+                  ? "Subscribing…"
+                  : "Submit"}
+              </button>
+
+              {newsletterState.status === "success" && (
+                <p
+                  className="newsletter-feedback newsletter-feedback--success"
+                  role="status"
+                >
+                  {newsletterState.message}
+                </p>
+              )}
+              {newsletterState.status === "error" && (
+                <p
+                  className="newsletter-feedback newsletter-feedback--error"
+                  role="alert"
+                >
+                  {newsletterState.message}
+                </p>
+              )}
+            </form>
           </div>
         </div>
       </section>

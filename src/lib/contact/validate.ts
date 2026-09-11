@@ -1,3 +1,5 @@
+import { isValidEmail } from "@/lib/validation/email";
+
 export type ContactPayload = {
   name: string;
   email: string;
@@ -10,13 +12,8 @@ export type ValidationResult =
   | { ok: false; error: string };
 
 const MAX_NAME = 120;
-const MAX_EMAIL = 254;
 const MAX_PHONE = 40;
 const MAX_MESSAGE = 4000;
-
-// Deliberately permissive: this catches typos and obvious junk, it does not
-// adjudicate RFC 5322. Real deliverability is proven by us replying.
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function asTrimmedString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -41,7 +38,7 @@ export function validateContactPayload(body: unknown): ValidationResult {
   if (name.length > MAX_NAME) return { ok: false, error: "That name is too long." };
 
   if (!email) return { ok: false, error: "Please enter your email address." };
-  if (email.length > MAX_EMAIL || !EMAIL_PATTERN.test(email)) {
+  if (!isValidEmail(email)) {
     return { ok: false, error: "Please enter a valid email address." };
   }
 

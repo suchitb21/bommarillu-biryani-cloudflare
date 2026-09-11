@@ -18,6 +18,11 @@ const OPTIONS = [
     title: "Contact Us",
     description: "Messages customers sent through the contact form.",
   },
+  {
+    href: "/admin/newsletters",
+    title: "Newsletters",
+    description: "Email addresses collected from the newsletter signup.",
+  },
 ];
 
 export default function AdminHomePage() {

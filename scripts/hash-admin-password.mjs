@@ -34,5 +34,8 @@ const salt = randomBytes(16);
 
 scrypt(password, salt, KEY_LENGTH, SCRYPT_OPTIONS, (error, key) => {
   if (error) throw error;
-  console.log(`ADMIN_PASSWORD_HASH=scrypt$${salt.toString("hex")}$${key.toString("hex")}`);
+  // Colon-separated on purpose. Next.js's env loader expands `$NAME`
+  // references inside .env files, so a `$`-separated hash silently collapses
+  // to the literal string "scrypt" by the time the app reads it.
+  console.log(`ADMIN_PASSWORD_HASH=scrypt:${salt.toString("hex")}:${key.toString("hex")}`);
 });

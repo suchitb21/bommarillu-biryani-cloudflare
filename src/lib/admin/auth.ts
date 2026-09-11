@@ -24,11 +24,13 @@ function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
 
 export async function verifyAdminPassword(password: string): Promise<boolean> {
   const stored = getAdminPasswordHash();
-  const [scheme, saltHex, hashHex] = stored.split("$");
+  // Colon-separated, never `$`: Next expands `$NAME` inside .env files, so a
+  // `$`-separated hash would arrive here as the bare string "scrypt".
+  const [scheme, saltHex, hashHex] = stored.split(":");
 
   if (scheme !== "scrypt" || !saltHex || !hashHex) {
     throw new Error(
-      "ADMIN_PASSWORD_HASH is malformed. It should look like scrypt$<saltHex>$<hashHex> - regenerate it with scripts/hash-admin-password.mjs."
+      "ADMIN_PASSWORD_HASH is malformed. It should look like scrypt:<saltHex>:<hashHex> - regenerate it with scripts/hash-admin-password.mjs."
     );
   }
 

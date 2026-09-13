@@ -273,14 +273,13 @@ export default function Home() {
               <div className="ribbon ribbon--bestseller">Bestseller</div>
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/menu-highlights/chicken-dum-biryani.webp" alt="Chicken Dum Biryani" />
+                <img src="/menu-highlights/chicken-dum-biryani.jpeg" alt="Chicken Dum Biryani" />
                 <div className="spice-row">
                   <ChiliIcon />
                   <ChiliIcon />
                 </div>
               </div>
               <h3>Chicken Dum Biryani</h3>
-              <div className="price">$16.99 &ndash; $32.99</div>
               <p>
                 Fragrant basmati layered dum-style with tender chicken and our
                 generations-old masala blend.
@@ -292,7 +291,7 @@ export default function Home() {
               <div className="ribbon ribbon--premium">Premium</div>
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/menu-highlights/mutton-biryani-weekend-special.webp" alt="Mutton Biryani (Goat) Weekend Special" />
+                <img src="/menu-highlights/mutton-biryani-weekend-special.jpeg" alt="Mutton Biryani (Goat) Weekend Special" />
                 <div className="spice-row">
                   <ChiliIcon />
                   <ChiliIcon />
@@ -304,7 +303,6 @@ export default function Home() {
                 <br />
                 Weekend Special
               </h3>
-              <div className="price">$19.99 &ndash; $37.99</div>
               <p>
                 Slow-cooked goat in a rich, deeply spiced gravy — a
                 weekends-only favorite.
@@ -316,13 +314,12 @@ export default function Home() {
               <div className="ribbon ribbon--chef">Chef&rsquo;s Pick</div>
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/menu-highlights/chefs-special-egg-biryani.webp" alt="Chef's Special Egg Biryani" />
+                <img src="/menu-highlights/chefs-special-egg-biryani.jpeg" alt="Chef's Special Egg Biryani" />
                 <div className="spice-row">
                   <ChiliIcon />
                 </div>
               </div>
               <h3>Chef&rsquo;s Special Egg Biryani</h3>
-              <div className="price">$15.99 &ndash; $29.99</div>
               <p>
                 Boiled eggs tossed through smoky, spice-laced basmati — a
                 comforting classic.
@@ -335,7 +332,7 @@ export default function Home() {
               <div className="veg-dot nonveg" />
               <div className="card-media">
                 <img
-                  src="/menu-highlights/bommarillu-special-chicken-biryani.webp"
+                  src="/menu-highlights/bommarillu-special-chicken-biryani.jpeg"
                   alt="Bommarillu Special Chicken Biryani (Boneless)"
                 />
                 <div className="spice-row">
@@ -348,7 +345,6 @@ export default function Home() {
                 <br />
                 Chicken Biryani (Boneless)
               </h3>
-              <div className="price">$17.99 &ndash; $34.99</div>
               <p>
                 Our signature boneless chicken, marinated overnight and
                 dum-cooked to perfection.
@@ -359,13 +355,12 @@ export default function Home() {
             <div className="menu-card">
               <div className="veg-dot" />
               <div className="card-media">
-                <img src="/menu-highlights/paneer-biryani.webp" alt="Paneer Biryani" />
+                <img src="/menu-highlights/paneer-biryani.jpeg" alt="Paneer Biryani" />
                 <div className="spice-row">
                   <ChiliIcon />
                 </div>
               </div>
               <h3>Paneer Biryani</h3>
-              <div className="price">$17.99 &ndash; $34.99</div>
               <p>
                 Soft paneer cubes layered with fragrant rice — a hearty
                 vegetarian favorite.
@@ -376,13 +371,12 @@ export default function Home() {
             <div className="menu-card">
               <div className="veg-dot nonveg" />
               <div className="card-media">
-                <img src="/menu-highlights/butter-chicken.webp" alt="Butter Chicken" />
+                <img src="/menu-highlights/butter-chicken.jpeg" alt="Butter Chicken" />
                 <div className="spice-row">
                   <ChiliIcon />
                 </div>
               </div>
               <h3>Butter Chicken</h3>
-              <div className="price">$15.99</div>
               <p>
                 Tender chicken simmered in a velvety tomato-butter gravy,
                 finished with cream.

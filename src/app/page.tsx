@@ -202,8 +202,8 @@ export default function Home() {
 
               <img
                 className="dish-photo"
-                src="/images/biryani.webp"
-                alt="Bommarillu chicken biryani served in a bowl with fried onions, cashews and mint"
+                src="/images/mascot.webp"
+                alt="Bommarillu Biryani mascots holding a pot of chicken biryani"
               />
 
               <div className="badge">

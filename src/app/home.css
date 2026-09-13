@@ -175,7 +175,7 @@
   position: relative;
   width: 100%;
   max-width: 520px;
-  aspect-ratio: 1672/941;
+  aspect-ratio: 1374/1145;
   margin-top: clamp(2.5rem, 6vw, 4rem);
 }
 .dish-photo {

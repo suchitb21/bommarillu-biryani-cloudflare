@@ -14,36 +14,13 @@
   align-items: center;
   gap: 0.7rem;
 }
-.logo-icon {
-  width: clamp(38px, 4vw, 46px);
-  height: clamp(38px, 4vw, 46px);
-  border-radius: 50%;
-  background: var(--brown);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.logo-badge {
+  width: clamp(70px, 8vw, 92px);
+  height: clamp(70px, 8vw, 92px);
+  border-radius: 14px;
+  object-fit: cover;
   flex-shrink: 0;
-}
-.logo-icon svg {
-  width: 58%;
-  height: 58%;
-}
-.logo-text {
-  line-height: 1;
-}
-.logo-name {
-  font-weight: 800;
-  font-size: clamp(1.15rem, 1.7vw, 1.5rem);
-  color: var(--brown);
   display: block;
-}
-.logo-sub {
-  font-weight: 700;
-  font-size: clamp(0.6rem, 0.8vw, 0.7rem);
-  color: var(--orange-dark);
-  letter-spacing: 3px;
-  display: block;
-  margin-top: 2px;
 }
 .navbar-right {
   display: flex;

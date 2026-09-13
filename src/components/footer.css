@@ -11,12 +11,6 @@
   grid-template-columns: 1.4fr 1fr 1fr 1fr;
   gap: 2.5rem;
 }
-.footer-brand .logo-icon {
-  background: var(--orange);
-}
-.footer-brand .logo-name {
-  color: var(--cream);
-}
 .footer-brand p {
   margin-top: 1rem;
   color: #d8c7ba;

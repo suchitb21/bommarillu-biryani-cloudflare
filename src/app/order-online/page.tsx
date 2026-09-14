@@ -1,10 +1,12 @@
 import { MenuPage } from "@/components/menu-page";
+import { StoreClock } from "@/components/store-clock";
 import { SQUARE_MENU_NAMES } from "@/lib/square/config";
 import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
 
 export default function OrderOnlinePage() {
   return (
     <>
+      <StoreClock />
       <div className="menu-page-delivery-note">
         <p>
           Want <strong>delivery</strong>? Orders are placed on our delivery

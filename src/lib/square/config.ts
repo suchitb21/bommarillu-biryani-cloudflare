@@ -5,6 +5,16 @@ export const SQUARE_MENU_NAMES = {
   catering: "Catering",
 } as const;
 
+/**
+ * Names of the existing Square Catering menu groups whose items are only
+ * made for Saturday/Sunday events (e.g. "WEEKEND BIRYANI",
+ * "Mutton Curry - WEEKENDS"). These are the restaurant's own display
+ * sections - no separate hidden tag category needed. Matched
+ * case-insensitively. Add a name here if a new weekend-only section is
+ * created in Square.
+ */
+export const WEEKEND_ONLY_CATEGORY_NAMES = ["WEEKEND BIRYANI", "Mutton Curry - WEEKENDS"];
+
 // Both "Menu" and "Catering" share this cache tag/window since they're
 // fetched the same way and change on the same cadence (whenever someone
 // edits the Square catalog, which the restaurant said is infrequent).

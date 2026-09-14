@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckout } from "@/lib/checkout/build-order";
-import { isTimeWithinOpenHours, zonedDateTimeToUtc } from "@/lib/time-slots";
+import { isTimeWithinOpenHours, isWeekendDate, zonedDateTimeToUtc } from "@/lib/time-slots";
+import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the catering checkout form uses to build its date/slot list.
@@ -25,6 +26,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   }
   if (body.fulfillmentMethod === "delivery" && !body.address) {
     return NextResponse.json({ ok: false, error: "Delivery address is required." }, { status: 400 });
+  }
+
+  // Defense in depth: don't trust the client's weekend-only gating alone.
+  if (cartRequiresWeekendEventDate(body.lines) && !isWeekendDate(body.eventDate)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "This order includes an item only available Saturdays and Sundays - please choose a weekend event date.",
+      },
+      { status: 400 }
+    );
   }
 
   // Catering orders are for a future event date, so "right now" is never a

@@ -54,6 +54,12 @@ function weekdayOfDate(dateStr: string): number {
   return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
 }
 
+/** True when a "YYYY-MM-DD" calendar date falls on a Saturday or Sunday. */
+export function isWeekendDate(dateStr: string): boolean {
+  const weekday = weekdayOfDate(dateStr);
+  return weekday === 0 || weekday === 6;
+}
+
 /** The open windows for a calendar date, or [] when the restaurant is closed. */
 function getOpenWindowsForDate(dateStr: string): MinutesWindow[] {
   return WEEKLY_OPEN_WINDOWS[weekdayOfDate(dateStr)] ?? [];
@@ -109,6 +115,48 @@ export function earliestDateForLeadTime(minLeadMinutes: number): string {
 export function isTimeWithinOpenHours(dateStr: string, timeStr: string): boolean {
   const minutes = timeToMinutes(timeStr);
   return getOpenWindowsForDate(dateStr).some((w) => minutes >= w.start && minutes <= w.end);
+}
+
+export type OrderingStatus =
+  | { isOpen: true; closesAt: Date }
+  | { isOpen: false; opensAt: Date | null };
+
+/**
+ * Same "is the restaurant open right now" question as `orderingAvailability`
+ * below, but returning real instants instead of a pre-formatted label - lets
+ * a client component render a live "closes/opens in Xh Ym Zs" countdown by
+ * re-calling this every second with a fresh `now` instead of trusting a
+ * value computed once on the server.
+ */
+export function getOrderingStatus(now: Date): OrderingStatus {
+  const todayStr = formatInTimeZone(now, RESTAURANT_TIME_ZONE, "yyyy-MM-dd");
+  const minutesNow =
+    Number(formatInTimeZone(now, RESTAURANT_TIME_ZONE, "H")) * 60 +
+    Number(formatInTimeZone(now, RESTAURANT_TIME_ZONE, "m"));
+
+  const todayWindows = getOpenWindowsForDate(todayStr);
+  const currentWindow = todayWindows.find((w) => minutesNow >= w.start && minutesNow < w.end);
+  if (currentWindow) {
+    return { isOpen: true, closesAt: zonedDateTimeToUtc(todayStr, toHHmm(currentWindow.end)) };
+  }
+
+  // Still opens later today (e.g. inside the Tue-Thu lunch break)?
+  const nextToday = todayWindows.find((w) => w.start > minutesNow);
+  if (nextToday) {
+    return { isOpen: false, opensAt: zonedDateTimeToUtc(todayStr, toHHmm(nextToday.start)) };
+  }
+
+  // Otherwise the next open day (up to a week ahead).
+  for (let daysAhead = 1; daysAhead <= 7; daysAhead++) {
+    const candidate = new Date(now.getTime() + daysAhead * 86_400_000);
+    const candidateStr = formatInTimeZone(candidate, RESTAURANT_TIME_ZONE, "yyyy-MM-dd");
+    const windows = getOpenWindowsForDate(candidateStr);
+    if (windows.length > 0) {
+      return { isOpen: false, opensAt: zonedDateTimeToUtc(candidateStr, toHHmm(windows[0].start)) };
+    }
+  }
+
+  return { isOpen: false, opensAt: null };
 }
 
 /**

@@ -5,7 +5,7 @@ import Image from "next/image";
 import "./catering-cart-panel.css";
 import "@/app/cart/cart.css";
 import { useCateringCart } from "@/lib/cart/cart-context";
-import { lineTotalCents, type CartLine } from "@/lib/cart/types";
+import { cartRequiresWeekendEventDate, lineTotalCents, type CartLine } from "@/lib/cart/types";
 import { CheckoutForm, type CheckoutFormValues } from "./checkout-form";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
@@ -112,6 +112,7 @@ export function CateringCartPanel() {
                   </button>
                   <CheckoutForm
                     showEventDate
+                    requiresWeekendEventDate={cartRequiresWeekendEventDate(cart.lines)}
                     minLeadMinutes={24 * 60}
                     deliveryHelpText="Delivery for catering orders is arranged directly by our staff after you check out - we'll confirm details by phone."
                     submitLabel="Pay now"

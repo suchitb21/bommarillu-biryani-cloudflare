@@ -3,7 +3,11 @@ import type { Square } from "square";
 import { unstable_cache } from "next/cache";
 import { getSquareClient } from "./client";
 import { listAllCatalogObjects } from "./list-all-catalog-objects";
-import { SQUARE_MENU_CACHE_TAG, SQUARE_MENU_REVALIDATE_SECONDS } from "./config";
+import {
+  SQUARE_MENU_CACHE_TAG,
+  SQUARE_MENU_REVALIDATE_SECONDS,
+  WEEKEND_ONLY_CATEGORY_NAMES,
+} from "./config";
 
 export type MenuItemVariationView = {
   id: string;
@@ -38,6 +42,10 @@ export type MenuItemView = {
   imageUrl?: string;
   variations: MenuItemVariationView[];
   modifierGroups: ModifierGroupView[];
+  /** True when this item is in one of WEEKEND_ONLY_CATEGORY_NAMES - the
+   * catering checkout restricts the event date to a Saturday/Sunday when a
+   * line like this is in the cart. */
+  isWeekendOnly: boolean;
 };
 
 export type MenuSectionView = {
@@ -147,7 +155,8 @@ function toModifierGroupView(
 function toMenuItemView(
   item: Square.CatalogObject.Item,
   imageUrlById: Map<string, string>,
-  modifierListsById: Map<string, Square.CatalogObject.ModifierList>
+  modifierListsById: Map<string, Square.CatalogObject.ModifierList>,
+  weekendOnlyCategoryIds: Set<string>
 ): MenuItemView {
   const firstImageId = item.itemData?.imageIds?.[0];
   const imageUrl = firstImageId ? imageUrlById.get(firstImageId) : undefined;
@@ -176,6 +185,10 @@ function toMenuItemView(
     .map((info) => toModifierGroupView(info, modifierListsById))
     .filter((group): group is ModifierGroupView => group !== null);
 
+  const isWeekendOnly = (item.itemData?.categories ?? []).some(
+    (ref) => ref.id != null && weekendOnlyCategoryIds.has(ref.id)
+  );
+
   return {
     id: item.id,
     name: item.itemData?.name ?? "Untitled item",
@@ -183,6 +196,7 @@ function toMenuItemView(
     imageUrl,
     variations,
     modifierGroups,
+    isWeekendOnly,
   };
 }
 
@@ -225,6 +239,17 @@ async function fetchMenuByName(menuName: string): Promise<MenuView> {
     modifierListsById.set(list.id, list);
   }
 
+  // Items in one of the WEEKEND_ONLY_CATEGORY_NAMES Catering menu groups are
+  // weekend-only - these are the restaurant's own existing display sections,
+  // not a separate hidden tag.
+  const weekendOnlyNames = new Set(WEEKEND_ONLY_CATEGORY_NAMES.map((name) => name.toLowerCase()));
+  const weekendOnlyCategoryIds = new Set(
+    categories
+      .filter((category) => weekendOnlyNames.has((category.categoryData?.name ?? "").trim().toLowerCase()))
+      .map((category) => category.id)
+      .filter((id): id is string => id != null)
+  );
+
   const menu = categories.find(
     (category) =>
       category.categoryData?.categoryType === "MENU_CATEGORY" &&
@@ -254,7 +279,7 @@ async function fetchMenuByName(menuName: string): Promise<MenuView> {
       })
       .filter((entry): entry is { item: Square.CatalogObject.Item; ordinal: number } => entry !== null)
       .sort((a, b) => a.ordinal - b.ordinal)
-      .map(({ item }) => toMenuItemView(item, imageUrlById, modifierListsById));
+      .map(({ item }) => toMenuItemView(item, imageUrlById, modifierListsById, weekendOnlyCategoryIds));
 
     return {
       // The SDK types `id` as optional on CatalogObjectCategory (it also

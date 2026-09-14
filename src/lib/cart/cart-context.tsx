@@ -77,7 +77,14 @@ function createCartStore(storageKey: string, defaultSource: CartSource) {
         const raw = window.localStorage.getItem(storageKey);
         if (raw) {
           const lines: CartLine[] = JSON.parse(raw);
-          dispatch({ type: "hydrate", lines: lines.map((l) => ({ ...l, source: l.source ?? defaultSource })) });
+          dispatch({
+            type: "hydrate",
+            lines: lines.map((l) => ({
+              ...l,
+              source: l.source ?? defaultSource,
+              isWeekendOnly: l.isWeekendOnly ?? false,
+            })),
+          });
         }
       } catch {
         // Corrupt or inaccessible localStorage - just start with an empty cart.

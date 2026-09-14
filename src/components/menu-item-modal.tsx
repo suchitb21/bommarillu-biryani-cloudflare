@@ -98,6 +98,7 @@ export function MenuItemModal({
       modifiers: selectedModifierOptions.map((o) => ({ id: o.id, name: o.name, priceCents: o.priceCents })),
       quantity,
       source,
+      isWeekendOnly: item.isWeekendOnly,
     });
     onClose();
   }

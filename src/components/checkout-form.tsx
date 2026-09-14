@@ -6,6 +6,7 @@ import "./checkout-form.css";
 import {
   earliestDateForLeadTime,
   getAvailableSlots,
+  isWeekendDate,
   orderingAvailability,
   todayInRestaurantTimeZone,
 } from "@/lib/time-slots";
@@ -30,6 +31,7 @@ function formatMoney(cents: number): string {
 
 export function CheckoutForm({
   showEventDate,
+  requiresWeekendEventDate = false,
   minLeadMinutes,
   deliveryHelpText,
   externalDeliveryHref,
@@ -40,6 +42,9 @@ export function CheckoutForm({
   /** Catering only - lets the customer pick a future event date instead of
    * always ordering for today. */
   showEventDate: boolean;
+  /** Catering only - true when the cart has a weekend-only item, restricting
+   * the event date to a Saturday/Sunday. */
+  requiresWeekendEventDate?: boolean;
   minLeadMinutes: number;
   /** Shown under the method toggle when in-form delivery is available
    * (catering: delivery is staff-arranged). Ignored when
@@ -118,6 +123,11 @@ export function CheckoutForm({
 
     if (!name.trim()) return setError("Please enter your name.");
     if (!phone.trim()) return setError("Please enter a phone number.");
+    if (showEventDate && requiresWeekendEventDate && !isWeekendDate(eventDate)) {
+      return setError(
+        "Your order includes an item only available Saturdays and Sundays - please choose a weekend event date."
+      );
+    }
     if (!selectedTimeSlot) return setError("Please choose a time.");
     if (
       fulfillmentMethod === "delivery" &&
@@ -295,6 +305,12 @@ export function CheckoutForm({
             min={minEventDate}
             onChange={(e) => setEventDate(e.target.value)}
           />
+          {requiresWeekendEventDate ? (
+            <p className="checkout-help">
+              Your order includes an item only available Saturdays &amp; Sundays &mdash; please
+              choose a weekend date.
+            </p>
+          ) : null}
         </div>
       ) : null}
 

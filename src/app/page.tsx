@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import "./home.css";
-import { OrderEntryModal } from "@/components/order-entry-modal";
+import {
+  DISMISS_KEY,
+  ORDER_ENTRY_DISMISSED_EVENT,
+  OrderEntryModal,
+} from "@/components/order-entry-modal";
 
 const TESTIMONIALS = [
   {
@@ -40,6 +44,40 @@ const TESTIMONIALS = [
 
 export default function Home() {
   const trackRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [canLoadVideo, setCanLoadVideo] = useState(false);
+  const [videoEligible, setVideoEligible] = useState(true);
+  const [muted, setMuted] = useState(true);
+
+  // A big chunk of visitors bounce straight off the order-entry modal into
+  // /catering or /order-online without ever seeing the hero, so don't spend
+  // bandwidth fetching the hero video until we know they're staying on this
+  // page (modal already dismissed this session, or dismissed just now).
+  useEffect(() => {
+    let dismissedAlready = false;
+    try {
+      dismissedAlready = sessionStorage.getItem(DISMISS_KEY) === "1";
+    } catch {
+      // sessionStorage unavailable - fall back to waiting for the event.
+    }
+    if (dismissedAlready) {
+      setCanLoadVideo(true);
+      return;
+    }
+    const onDismiss = () => setCanLoadVideo(true);
+    window.addEventListener(ORDER_ENTRY_DISMISSED_EVENT, onDismiss);
+    return () => window.removeEventListener(ORDER_ENTRY_DISMISSED_EVENT, onDismiss);
+  }, []);
+
+  // Respect reduced-motion and metered/data-saver connections - show the
+  // static poster frame instead of pulling down the video.
+  useEffect(() => {
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const connection = (navigator as unknown as { connection?: { saveData?: boolean } }).connection;
+    if (reducedMotion || connection?.saveData) setVideoEligible(false);
+  }, []);
+
+  const showVideo = canLoadVideo && videoEligible;
 
   useEffect(() => {
     const cards = document.querySelectorAll(".testimonial-card");
@@ -184,49 +222,41 @@ export default function Home() {
 
           <div className="hero-image">
             <div className="dish-wrap">
-              <svg className="hero-arc" viewBox="0 0 400 120">
-                <path id="arcPath" d="M20,110 A400,400 0 0,1 380,110" fill="none" />
-                <text
-                  fontFamily="var(--font-playfair-display), serif"
-                  fontWeight="700"
-                  fontSize="21"
-                  fill="#3b2417"
-                  letterSpacing="1.5"
-                  textAnchor="middle"
-                >
-                  <textPath href="#arcPath" xlinkHref="#arcPath" startOffset="50%">
-                    Bommarillu&rsquo;s Finest Biryani
-                  </textPath>
-                </text>
-              </svg>
-
-              <img
-                className="dish-photo"
-                src="/images/mascot.webp"
-                alt="Bommarillu Biryani mascots holding a pot of chicken biryani"
-              />
-
-              <div className="badge">
-                <svg viewBox="0 0 96 96">
-                  <circle cx="48" cy="48" r="46" fill="#4c7a3d" />
-                  <circle
-                    cx="48"
-                    cy="48"
-                    r="46"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="1.5"
-                    strokeDasharray="3 3"
-                    opacity="0.6"
-                  />
-                  <text x="48" y="42" textAnchor="middle" fill="#fff" fontFamily="var(--font-poppins), sans-serif" fontWeight="700" fontSize="13">
-                    Hot
-                  </text>
-                  <text x="48" y="62" textAnchor="middle" fill="#fff" fontFamily="var(--font-poppins), sans-serif" fontWeight="700" fontSize="13">
-                    &amp; Fresh
-                  </text>
-                </svg>
-              </div>
+              {showVideo ? (
+                <>
+                  <video
+                    ref={videoRef}
+                    className="dish-photo"
+                    autoPlay
+                    loop
+                    muted={muted}
+                    playsInline
+                    preload="auto"
+                    poster="/images/biryani-poster.jpg"
+                    aria-label="Bommarillu Biryani's chicken biryani being freshly prepared"
+                  >
+                    <source src="/videos/biryani.webm" type="video/webm" />
+                  </video>
+                  <button
+                    type="button"
+                    className="dish-sound-toggle"
+                    onClick={() => {
+                      const next = !muted;
+                      setMuted(next);
+                      if (videoRef.current) videoRef.current.muted = next;
+                    }}
+                    aria-label={muted ? "Unmute video" : "Mute video"}
+                  >
+                    {muted ? <MutedIcon /> : <SoundIcon />}
+                  </button>
+                </>
+              ) : (
+                <img
+                  className="dish-photo"
+                  src="/images/biryani-poster.jpg"
+                  alt="Bommarillu Biryani's chicken biryani being freshly prepared"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -557,6 +587,40 @@ export default function Home() {
         </div>
       </section>
     </>
+  );
+}
+
+function MutedIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 9v6h4l5 5V4L8 9H4Z"
+        fill="currentColor"
+      />
+      <path
+        d="M16.5 8.5l4 7M20.5 8.5l-4 7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function SoundIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 9v6h4l5 5V4L8 9H4Z"
+        fill="currentColor"
+      />
+      <path
+        d="M16.5 9a4.5 4.5 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }
 

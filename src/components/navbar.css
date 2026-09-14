@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem clamp(1.25rem, 5vw, 4.5rem);
+  padding: 0.85rem clamp(1.25rem, 5vw, 4.5rem);
   position: sticky;
   top: 0;
   background: var(--cream);
@@ -15,9 +15,9 @@
   gap: 0.7rem;
 }
 .logo-badge {
-  width: clamp(70px, 8vw, 92px);
-  height: clamp(70px, 8vw, 92px);
-  border-radius: 14px;
+  width: clamp(52px, 5vw, 64px);
+  height: clamp(52px, 5vw, 64px);
+  border-radius: 12px;
   object-fit: cover;
   flex-shrink: 0;
   display: block;

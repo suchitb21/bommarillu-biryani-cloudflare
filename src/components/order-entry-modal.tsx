@@ -7,7 +7,12 @@ import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
 
 // Once per browser session: picking an option or "just browsing" dismisses
 // it until the next session, so it never nags a returning visitor.
-const DISMISS_KEY = "bommarillu-order-entry-dismissed";
+export const DISMISS_KEY = "bommarillu-order-entry-dismissed";
+
+// Fired when the visitor dismisses the modal and is staying on the page (vs.
+// navigating away via Order Online/Catering) - lets the page defer loading
+// heavy hero media until it knows it's actually needed.
+export const ORDER_ENTRY_DISMISSED_EVENT = "order-entry:dismissed";
 
 // No-op subscription: the modal only needs "are we on the client yet?" as a
 // one-way latch (server snapshot false -> client snapshot true) so it can
@@ -50,6 +55,7 @@ export function OrderEntryModal() {
       // Ignore write failures.
     }
     setDismissed(true);
+    window.dispatchEvent(new Event(ORDER_ENTRY_DISMISSED_EVENT));
   }, []);
 
   useEffect(() => {

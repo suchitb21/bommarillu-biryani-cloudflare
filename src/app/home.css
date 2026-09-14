@@ -8,12 +8,12 @@
   position: relative;
   max-width: 1280px;
   margin: 0 auto;
-  padding: clamp(2rem, 5vw, 2.5rem) clamp(1.25rem, 5vw, 4.5rem) clamp(2rem, 4vw, 2.75rem);
+  padding: clamp(0.5rem, 1.5vw, 0.85rem) clamp(1.25rem, 5vw, 4.5rem) clamp(1.5rem, 3vw, 2rem);
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: clamp(2rem, 5vw, 4rem);
   align-items: center;
-  min-height: min(80vh, 700px);
+  min-height: min(75vh, 620px);
 }
 
 .cta-arrow {
@@ -174,46 +174,42 @@
 .dish-wrap {
   position: relative;
   width: 100%;
-  max-width: 520px;
-  aspect-ratio: 1374/1145;
-  margin-top: clamp(2.5rem, 6vw, 4rem);
+  max-width: 320px;
+  aspect-ratio: 9/16;
+  margin-top: clamp(0.5rem, 2vw, 1.25rem);
 }
 .dish-photo {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
+  border-radius: 20px;
   filter: drop-shadow(0 25px 26px rgba(59, 36, 23, 0.35));
 }
 
-.hero-arc {
+.dish-sound-toggle {
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 92%;
-  padding-bottom: 0.4rem;
-  z-index: 5;
-  pointer-events: none;
+  top: 12px;
+  right: 12px;
+  z-index: 7;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(59, 36, 23, 0.55);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
-.hero-arc svg {
-  width: 100%;
-  height: auto;
-  display: block;
+.dish-sound-toggle:hover {
+  background: rgba(59, 36, 23, 0.75);
 }
-
-.badge {
-  position: absolute;
-  right: 6%;
-  bottom: 4%;
-  width: 19%;
-  aspect-ratio: 1/1;
-  z-index: 6;
-  filter: drop-shadow(0 8px 16px rgba(59, 36, 23, 0.25));
-}
-.badge svg {
-  width: 100%;
-  height: 100%;
+.dish-sound-toggle svg {
+  width: 17px;
+  height: 17px;
 }
 
 /* ===================== BESTSELLERS ===================== */
@@ -664,8 +660,14 @@
     width: 110px;
   }
   .dish-wrap {
-    max-width: 380px;
-    margin-top: 7.5rem;
+    max-width: none;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    margin-top: 1.5rem;
+  }
+  .dish-photo {
+    border-radius: 0;
   }
 
   .menu-grid {

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
     return NextResponse.json(
       {
         ok: false,
-        error: "This order includes an item only available Saturdays and Sundays - please choose a weekend event date.",
+        error: "This order includes an item only available Friday-Sunday - please choose one of those event dates.",
       },
       { status: 400 }
     );

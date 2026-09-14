@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import "./cart.css";
 import { useOrderOnlineCart } from "@/lib/cart/cart-context";
-import { lineTotalCents, type CartLine } from "@/lib/cart/types";
+import { cartRequiresWeekendEventDate, lineTotalCents, type CartLine } from "@/lib/cart/types";
 import { CheckoutForm, type CheckoutFormValues } from "@/components/checkout-form";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
@@ -70,6 +70,7 @@ export default function CartPage() {
 
             <CheckoutForm
               showEventDate={false}
+              requiresWeekendEventDate={cartRequiresWeekendEventDate(cart.lines)}
               minLeadMinutes={20}
               externalDeliveryHref={DELIVERY_ORDERING_URL}
               submitLabel="Pay now"

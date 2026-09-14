@@ -117,15 +117,25 @@ export function CheckoutForm({
   );
   const onlineOrderingClosed = availability !== null && !availability.isOpen;
 
+  // Order Online has no date picker (it's always "today"), so a weekend-only
+  // item can't be fixed by choosing a different date the way Catering can -
+  // the whole completion section is replaced with an explanation instead of
+  // a submit-time error. Catering keeps the softer inline-hint + validation
+  // treatment below since the customer CAN just pick a Fri/Sat/Sun date.
+  const blockedByWeekendOnlyToday =
+    !showEventDate && requiresWeekendEventDate && !isWeekendDate(dateForSlots);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!name.trim()) return setError("Please enter your name.");
     if (!phone.trim()) return setError("Please enter a phone number.");
-    if (showEventDate && requiresWeekendEventDate && !isWeekendDate(eventDate)) {
+    if (requiresWeekendEventDate && !isWeekendDate(dateForSlots)) {
       return setError(
-        "Your order includes an item only available Saturdays and Sundays - please choose a weekend event date."
+        showEventDate
+          ? "Your order includes an item only available Friday-Sunday - please choose one of those event dates."
+          : "Your order includes an item only available Friday-Sunday - please come back then."
       );
     }
     if (!selectedTimeSlot) return setError("Please choose a time.");
@@ -307,8 +317,8 @@ export function CheckoutForm({
           />
           {requiresWeekendEventDate ? (
             <p className="checkout-help">
-              Your order includes an item only available Saturdays &amp; Sundays &mdash; please
-              choose a weekend date.
+              Your order includes an item only available Friday-Sunday &mdash; please choose
+              one of those dates.
             </p>
           ) : null}
         </div>
@@ -338,6 +348,15 @@ export function CheckoutForm({
           ) : null}
           <p className="checkout-help">
             You can still browse the menu - or use the delivery link above, which follows its own hours.
+          </p>
+        </div>
+      ) : blockedByWeekendOnlyToday ? (
+        <div className="checkout-closed">
+          <p className="checkout-closed-title">
+            Your order includes an item only available Friday-Sunday.
+          </p>
+          <p className="checkout-closed-sub">
+            Please come back then, or remove that item to order the rest today.
           </p>
         </div>
       ) : (

@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createCheckout } from "@/lib/checkout/build-order";
 import {
   isTimeWithinOpenHours,
+  isWeekendDate,
   orderingAvailability,
   todayInRestaurantTimeZone,
   zonedDateTimeToUtc,
 } from "@/lib/time-slots";
+import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the /cart checkout form uses to build its slot list.
@@ -50,6 +52,19 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   }
 
   const dateStr = todayInRestaurantTimeZone();
+
+  // Defense in depth: don't trust the client's weekend-only gating alone.
+  // Order Online has no date picker (always "today"), so this can't be
+  // fixed by choosing another date the way Catering can.
+  if (cartRequiresWeekendEventDate(body.lines) && !isWeekendDate(dateStr)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "This order includes an item only available Friday-Sunday - please come back then.",
+      },
+      { status: 400 }
+    );
+  }
 
   // Ordering is only "active" while the restaurant is open per its weekly
   // timetable (same check the checkout form shows) - reject anything that

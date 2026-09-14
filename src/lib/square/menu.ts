@@ -42,9 +42,9 @@ export type MenuItemView = {
   imageUrl?: string;
   variations: MenuItemVariationView[];
   modifierGroups: ModifierGroupView[];
-  /** True when this item is in one of WEEKEND_ONLY_CATEGORY_NAMES - the
-   * catering checkout restricts the event date to a Saturday/Sunday when a
-   * line like this is in the cart. */
+  /** True when this item is in one of WEEKEND_ONLY_CATEGORY_NAMES - checkout
+   * restricts ordering (Order Online's today, or Catering's event date) to
+   * Friday-Sunday when a line like this is in the cart. */
   isWeekendOnly: boolean;
 };
 

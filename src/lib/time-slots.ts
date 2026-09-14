@@ -54,10 +54,12 @@ function weekdayOfDate(dateStr: string): number {
   return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
 }
 
-/** True when a "YYYY-MM-DD" calendar date falls on a Saturday or Sunday. */
+/** True when a "YYYY-MM-DD" calendar date falls on a Friday, Saturday, or
+ * Sunday (Pacific calendar day) - the restaurant's "weekend special" window
+ * for items only made Fri-Sun. */
 export function isWeekendDate(dateStr: string): boolean {
   const weekday = weekdayOfDate(dateStr);
-  return weekday === 0 || weekday === 6;
+  return weekday === 0 || weekday === 5 || weekday === 6;
 }
 
 /** The open windows for a calendar date, or [] when the restaurant is closed. */

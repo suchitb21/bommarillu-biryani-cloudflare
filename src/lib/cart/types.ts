@@ -37,8 +37,8 @@ export type CartLine = {
   quantity: number;
   source: CartSource;
   /** True when this item is weekend-only in Square (see
-   * WEEKEND_ONLY_CATEGORY_NAMES) - catering checkout restricts the event
-   * date to a Saturday/Sunday when any line has this set. */
+   * WEEKEND_ONLY_CATEGORY_NAMES) - checkout restricts ordering to
+   * Friday-Sunday when any line has this set. */
   isWeekendOnly: boolean;
 };
 
@@ -55,9 +55,10 @@ export function lineTotalCents(line: CartLine): number {
   return (line.unitPriceCents + modifiersCents) * line.quantity;
 }
 
-/** True when any line in the cart is weekend-only, meaning the event date
- * must be a Saturday or Sunday. Used both client-side (checkout form) and
- * server-side (checkout API route) so the two can't disagree. */
+/** True when any line in the cart is weekend-only, meaning the order date
+ * (Catering's chosen event date, or Order Online's today) must fall on a
+ * Friday, Saturday, or Sunday. Used both client-side (checkout form) and
+ * server-side (checkout API routes) so the two can't disagree. */
 export function cartRequiresWeekendEventDate(lines: CartLine[]): boolean {
   return lines.some((line) => line.isWeekendOnly);
 }

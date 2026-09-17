@@ -1,36 +1,204 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bommarillu Biryani
 
-## Getting Started
+Website and internal admin dashboard for **Bommarillu Biryani** —
+17020 Avondale Way, Redmond, WA 98052 · +1 425-420-0160.
 
-First, run the development server:
+Square is the system of record for the menu, orders, and payments. A small
+Neon Postgres database holds what Square does not: contact messages and
+newsletter signups.
+
+## Stack
+
+| Layer | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling | Tailwind v4 plus hand-written CSS per feature |
+| Commerce | Square Catalog, Orders, and Checkout APIs (`square` SDK 45) |
+| Database | Neon Postgres via `@neondatabase/serverless` (HTTP driver) |
+| Hosting | Vercel, with Web Analytics and Speed Insights |
+| Admin auth | Shared password plus a signed session cookie |
+
+## Local setup
 
 ```bash
+npm install
+cp .env.example .env.local     # then fill in the values
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Site: <http://localhost:3000> · Admin: <http://localhost:3000/admin>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All of these belong in `.env.local` locally **and** in the Vercel project's
+environment variables. Vercel only picks up new values on a fresh build, so
+redeploy after changing any of them.
 
-## Learn More
+### Required for the public site
 
-To learn more about Next.js, take a look at the following resources:
+| Variable | Notes |
+| --- | --- |
+| `SQUARE_ACCESS_TOKEN` | Production or sandbox access token |
+| `SQUARE_ENVIRONMENT` | `production` or `sandbox` |
+| `SQUARE_LOCATION_ID` | The Redmond location |
+| `REVALIDATE_SECRET` | Any random string; guards `/api/revalidate-menu` |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Required for the contact form, newsletter, and admin lists
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Notes |
+| --- | --- |
+| `DATABASE_URL` | **Pooled** connection string from the Neon console |
 
-## Deploy on Vercel
+### Required for the admin dashboard
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Variable | How to produce it |
+| --- | --- |
+| `ADMIN_PASSWORD_HASH` | `node scripts/hash-admin-password.mjs 'your-password'` |
+| `SESSION_SECRET` | `openssl rand -base64 48` (32 characters minimum) |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Optional
+
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `SQUARE_PORTAL_SOURCE_NAME` | `Biryani Catering` | The Square *application* name our orders carry. See [Identifying our orders](#identifying-our-orders). |
+| `ADMIN_ORDER_LOOKBACK_DAYS` | `365` | How far back the dashboard scans, capped at 365 |
+
+> **Careful with `$` in `.env` files.** Next.js expands `$NAME` references when
+> it parses `.env.local`, so a value containing `$` can be silently truncated.
+> This is why `ADMIN_PASSWORD_HASH` uses `:` separators rather than `$`.
+
+## Routes
+
+**Public pages** — `/`, `/about-us`, `/order-online`, `/catering`, `/cart`,
+`/order-confirmation`, `/contact`, `/privacy`, `/terms`
+
+**API** — `/api/checkout/order-online`, `/api/checkout/catering`,
+`/api/contact`, `/api/newsletter`, `/api/revalidate-menu`,
+`/api/square/health`, `/api/admin/login`, `/api/admin/logout`
+
+**Admin** — `/admin` (hub), `/admin/orders`, `/admin/catering`,
+`/admin/messages`, `/admin/newsletters`, `/admin/login`
+
+## Identifying our orders
+
+This is the least obvious part of the codebase, and the part most likely to
+break quietly. The admin dashboard shows **only orders placed through this
+website** — never Square POS, DoorDash, Uber Eats, Grubhub, or Square Online.
+
+Two independent markers are used, and they answer different questions:
+
+**1. `order.source.name` — is this order ours?**
+Square sets this to the **application name** on orders an app creates. Ours is
+`Biryani Catering`. Every other channel reports its own distinct value
+(`Point of Sale`, `DoorDash`, `UberEats`, `Grubhub`, `Square Online`), so the
+dashboard passes it to Square as a `source_filter` allowlist and those orders
+never leave Square's servers.
+
+This is a performance fix, not just tidiness. Filtering in our own code after
+fetching meant downloading the entire location's order history:
+
+| | Before | After |
+| --- | --- | --- |
+| Orders downloaded (90-day window) | 17,369 | **5** |
+| Pages | 35 | **1** |
+| Square API time | ~39,000 ms | **~455 ms** |
+| Page load, uncached | ~39 s | **~1.6 s** |
+
+**2. `order.metadata.channel` — which of our two flows?**
+Set by our checkout to `"order-online"` or `"catering"`. Both flows share one
+Square application and therefore one source name, so source cannot separate
+them.
+
+Square metadata is **private to the application that wrote it**, which makes
+this a trustworthy marker: nothing else can have set it. Note that it is *not*
+filterable server-side — Square's search supports only state, date, source,
+fulfillment, and customer filters.
+
+### Ordering rules applied in the dashboard
+
+- **Unpaid orders are hidden.** Creating a payment link creates the Square
+  order immediately, so an abandoned checkout would otherwise appear as a real
+  upcoming order and have staff preparing food nobody paid for. Hidden counts
+  are shown per page so nothing disappears silently.
+- **Cancelled orders are excluded.**
+- **Upcoming vs Completed** is decided by the scheduled pickup/event time, not
+  by Square's order state. Upcoming sorts soonest-first.
+- **All times are formatted server-side in Pacific time** and passed to the
+  client pre-formatted, so the browser never re-derives a date and hydration
+  cannot disagree with the server.
+- Results are cached in-process for 60 seconds.
+
+> **If the Square application is ever renamed** in the Square Developer Portal,
+> `source.name` changes, the allowlist matches nothing, and both order pages go
+> quietly empty. Set `SQUARE_PORTAL_SOURCE_NAME` to the new name, or update the
+> default in `src/lib/square/config.ts`.
+
+## Database
+
+Two tables, both created automatically on first write — there is no migration
+step, so a fresh database or Neon branch works immediately.
+
+| Table | Written by |
+| --- | --- |
+| `contact_submissions` | The contact form (`/api/contact`) |
+| `newsletter_subscribers` | The newsletter card (`/api/newsletter`) |
+
+`newsletter_subscribers` has a case-insensitive unique index on `lower(email)`,
+so signing up twice is a no-op rather than an error.
+
+## Admin authentication
+
+A single shared password protects the dashboard. Everything is stateless.
+
+- The password is stored only as a **scrypt hash** (`ADMIN_PASSWORD_HASH`);
+  there is no way to recover a forgotten password — regenerate it.
+- Sessions are HMAC-signed tokens in an `httpOnly`, `SameSite=Lax` cookie,
+  `Secure` and `__Host-` prefixed in production, valid for **30 days**.
+- The token is bound to the current password hash, so **changing
+  `ADMIN_PASSWORD_HASH` invalidates every existing session** immediately.
+- The gate is enforced in `src/proxy.ts` (Next 16's renamed middleware) **and**
+  re-checked in the dashboard layout, because a matcher should never be the
+  only thing in front of customer data.
+- Login attempts are throttled to 5 per 15 minutes. This is in-memory and
+  therefore best-effort on serverless.
+
+## Scripts
+
+| Script | Purpose |
+| --- | --- |
+| `scripts/hash-admin-password.mjs` | Generates `ADMIN_PASSWORD_HASH` |
+| `scripts/verify-square-sources.sh` | Audits which `source.name` values exist in the account, whether `source_filter` works, and whether long date ranges are accepted. Read-only. |
+| `scripts/compare-portal-fetch.mjs` | Before/after check that the source filter returns the same portal orders while downloading far fewer. Read-only. |
+
+The two read-only diagnostics take credentials from the environment and print
+no customer names, phones, or addresses:
+
+```bash
+export SQUARE_ACCESS_TOKEN='...'
+export SQUARE_LOCATION_ID='...'
+bash scripts/verify-square-sources.sh
+```
+
+## Deployment
+
+Deployed on Vercel. The apex domain currently serves a separate Weebly site;
+`admin.bommarillubiryani.com` does not exist yet. To point a hostname at this
+app, add a `CNAME` in GoDaddy DNS — Vercel provisions the certificate.
+
+## Opening hours
+
+`src/lib/time-slots.ts` is the **single source of truth**. It defines
+`WEEKLY_OPEN_WINDOWS`, which both gates the times a customer may book and
+generates the display strings the contact page and footer render, via
+`getWeeklyHours()`.
+
+Do not hardcode hours anywhere else. The contact page used to keep its own copy,
+and it had drifted on five of seven days — advertising a 3–4 PM break on days
+the kitchen stayed open, and closing times up to 45 minutes earlier than the
+timetable allowed. Editing `WEEKLY_OPEN_WINDOWS` now updates every surface at
+once.
+
+## Further reading
+
+- `design.md` — why the Square menu is cached the way it is
+- `AGENTS.md` — Next.js 16 agent rules (regenerated by `next dev`)

@@ -127,6 +127,20 @@ textarea.form-field {
   color: var(--destructive);
 }
 
+/* Honeypot field. Parked off-screen rather than display:none - some bots skip
+   hidden inputs but still fill parked ones. Never focusable, never announced
+   to screen readers. */
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .newsletter-card {
   position: relative;
   overflow: hidden;

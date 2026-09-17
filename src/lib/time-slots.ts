@@ -11,21 +11,24 @@ export const RESTAURANT_TIME_ZONE = "America/Los_Angeles";
 const SLOT_INTERVAL_MINUTES = 30;
 
 // Minutes of day, e.g. 11:00 AM -> 660, 10:00 PM -> 1320.
-type MinutesWindow = { start: number; end: number };
+export type MinutesWindow = { start: number; end: number };
 
 /**
  * The restaurant's weekly timetable, as minutes of day in Pacific time
  * (Redmond, USA). Source: the Square timetable the restaurant follows.
  * Indexed by JS weekday (0 = Sunday ... 6 = Saturday).
  *
- * Monday        11:00 AM - 10:00 PM
+ * Monday        11:00 AM - 2:30 PM, 4:30 PM - 10:00 PM   (lunch break)
  * Tue-Thu       11:00 AM - 2:30 PM, 4:30 PM - 10:00 PM   (lunch break)
  * Friday/Sat    11:00 AM - 10:45 PM
  * Sunday        11:00 AM - 10:00 PM
  */
 const WEEKLY_OPEN_WINDOWS: Record<number, MinutesWindow[]> = {
   0: [{ start: 11 * 60, end: 22 * 60 }], // Sun
-  1: [{ start: 11 * 60, end: 22 * 60 }], // Mon
+  1: [
+    { start: 11 * 60, end: 14 * 60 + 30 }, // Mon
+    { start: 16 * 60 + 30, end: 22 * 60 },
+  ],
   2: [
     { start: 11 * 60, end: 14 * 60 + 30 }, // Tue
     { start: 16 * 60 + 30, end: 22 * 60 },
@@ -89,6 +92,45 @@ function formatTimeLabel(minutesOfDay: number): string {
 
 function formatSlotLabel(minutesOfDay: number): string {
   return `${formatTimeLabel(minutesOfDay)} PT`;
+}
+
+/** One weekday's hours, with display strings derived from the same windows the
+ * booking code enforces. */
+export type DayHours = {
+  /** Minute-of-day windows customers may actually book inside. */
+  windows: MinutesWindow[];
+  /** One formatted range per window, e.g. "11:00 AM – 2:30 PM". */
+  ranges: string[];
+  /** All ranges joined, or "Closed". */
+  label: string;
+};
+
+const EN_DASH = "\u2013";
+
+/**
+ * The week's opening hours, indexed by JS weekday (0 = Sunday ... 6 =
+ * Saturday), as display strings generated from WEEKLY_OPEN_WINDOWS.
+ *
+ * The contact page and the footer both render from this rather than keeping
+ * their own copies, so the hours advertised to customers cannot drift from the
+ * hours they are allowed to book. They had drifted: the contact page was
+ * showing a 3-4 PM break on days the booking code left open, and closing times
+ * up to 45 minutes earlier than the timetable actually allowed.
+ */
+export function getWeeklyHours(): DayHours[] {
+  return Array.from({ length: 7 }, (_, weekday) => {
+    const windows = WEEKLY_OPEN_WINDOWS[weekday] ?? [];
+    const ranges = windows.map(
+      (window) =>
+        `${formatTimeLabel(window.start)} ${EN_DASH} ${formatTimeLabel(window.end)}`
+    );
+
+    return {
+      windows,
+      ranges,
+      label: ranges.length > 0 ? ranges.join(" & ") : "Closed",
+    };
+  });
 }
 
 /** Converts a "YYYY-MM-DD" date + "HH:mm" time, both meant as wall-clock

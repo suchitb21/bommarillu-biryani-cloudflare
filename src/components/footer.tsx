@@ -1,5 +1,57 @@
+import { Fragment } from "react";
 import Link from "next/link";
+import { getWeeklyHours } from "@/lib/time-slots";
 import "./footer.css";
+
+/** Short day labels, indexed by JS weekday (0 = Sunday). */
+const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The footer reads Monday-first, the way the restaurant thinks about its week.
+ * Sunday sorts last because it shares its hours with nothing adjacent to it. */
+const FOOTER_WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+
+/**
+ * Collapses runs of consecutive days that share the same hours into single rows
+ * ("Mon–Thu ...", "Fri–Sat ..."). Derived from the booking timetable, so the
+ * footer cannot advertise hours the ordering system will not honour.
+ */
+function buildHourGroups(): { days: string; ranges: string[] }[] {
+  const hours = getWeeklyHours();
+  const groups: {
+    days: string;
+    ranges: string[];
+    firstDay: string;
+    lastWeekday: number;
+    label: string;
+  }[] = [];
+
+  for (const weekday of FOOTER_WEEK_ORDER) {
+    const label = hours[weekday].label;
+    const previous = groups[groups.length - 1];
+
+    if (
+      previous &&
+      previous.label === label &&
+      previous.lastWeekday + 1 === weekday
+    ) {
+      previous.days = `${previous.firstDay}\u2013${SHORT_DAYS[weekday]}`;
+      previous.lastWeekday = weekday;
+      continue;
+    }
+
+    groups.push({
+      days: SHORT_DAYS[weekday],
+      ranges: hours[weekday].ranges,
+      firstDay: SHORT_DAYS[weekday],
+      lastWeekday: weekday,
+      label,
+    });
+  }
+
+  return groups.map(({ days, ranges }) => ({ days, ranges }));
+}
+
+const HOUR_GROUPS = buildHourGroups();
 
 export function Footer() {
   return (
@@ -58,15 +110,18 @@ export function Footer() {
           <h4>Visit Us</h4>
           <div className="footer-hours">
             <span className="footer-hours-title">Open (Pacific)</span>
-            Mon 11 AM &ndash; 10 PM
-            <br />
-            Tue&ndash;Thu 11 AM &ndash; 2:30 PM,
-            <br />
-            &ensp;4:30 PM &ndash; 10 PM
-            <br />
-            Fri&ndash;Sat 11 AM &ndash; 10:45 PM
-            <br />
-            Sun 11 AM &ndash; 10 PM
+            {HOUR_GROUPS.map((group, groupIndex) => (
+              <Fragment key={group.days}>
+                {groupIndex > 0 && <br />}
+                {group.days} {group.ranges[0] ?? "Closed"}
+                {group.ranges.slice(1).map((range) => (
+                  <Fragment key={range}>
+                    ,<br />
+                    &ensp;{range}
+                  </Fragment>
+                ))}
+              </Fragment>
+            ))}
           </div>
           <Link href="/#faq">Common Questions</Link>
         </div>

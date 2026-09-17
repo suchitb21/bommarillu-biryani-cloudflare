@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { getWeeklyHours } from "@/lib/time-slots";
 import "./contact.css";
 
 const WEEKDAY_NAMES = [
@@ -13,27 +14,24 @@ const WEEKDAY_NAMES = [
   "Saturday",
 ];
 
-const HOURS_DATA = [
-  { shifts: [[11, 0, 15, 0], [16, 0, 22, 0]], label: "11:00 AM – 3:00 PM & 4:00 PM – 10:00 PM" }, // Sun
-  { shifts: [[11, 0, 14, 30], [16, 30, 21, 45]], label: "11:00 AM – 2:30 PM & 4:30 PM – 9:45 PM" }, // Mon
-  { shifts: [[11, 0, 14, 30], [16, 30, 21, 45]], label: "11:00 AM – 2:30 PM & 4:30 PM – 9:45 PM" }, // Tue
-  { shifts: [[11, 0, 14, 30], [16, 30, 21, 45]], label: "11:00 AM – 2:30 PM & 4:30 PM – 9:45 PM" }, // Wed
-  { shifts: [[11, 0, 14, 30], [16, 30, 21, 45]], label: "11:00 AM – 2:30 PM & 4:30 PM – 9:45 PM" }, // Thu
-  { shifts: [[11, 0, 15, 0], [16, 0, 22, 0]], label: "11:00 AM – 3:00 PM & 4:00 PM – 10:00 PM" }, // Fri
-  { shifts: [[11, 0, 15, 0], [16, 0, 22, 0]], label: "11:00 AM – 3:00 PM & 4:00 PM – 10:00 PM" }, // Sat
-];
+/**
+ * Opening hours come straight from the booking timetable, so what is shown here
+ * can never disagree with the times a customer is actually allowed to pick.
+ * This used to be a hand-maintained copy and had drifted on five of seven days:
+ * it advertised a 3-4 PM break on days the kitchen stayed open, and closing
+ * times up to 45 minutes earlier than the timetable allowed.
+ */
+const WEEKLY_HOURS = getWeeklyHours();
 
-const HOURS_ROWS = [
-  { day: "Sunday", times: ["11:00 AM – 3:00 PM", "4:00 PM – 10:00 PM"] },
-  { day: "Monday", times: ["11:00 AM – 2:30 PM", "4:30 PM – 9:45 PM"] },
-  { day: "Tuesday", times: ["11:00 AM – 2:30 PM", "4:30 PM – 9:45 PM"] },
-  { day: "Wednesday", times: ["11:00 AM – 2:30 PM", "4:30 PM – 9:45 PM"] },
-  { day: "Thursday", times: ["11:00 AM – 2:30 PM", "4:30 PM – 9:45 PM"] },
-  { day: "Friday", times: ["11:00 AM – 3:00 PM", "4:00 PM – 10:00 PM"] },
-  { day: "Saturday", times: ["11:00 AM – 3:00 PM", "4:00 PM – 10:00 PM"] },
-];
-
-const EMPTY_CONTACT_FORM = { name: "", email: "", phone: "", message: "" };
+const EMPTY_CONTACT_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  message: "",
+  // Honeypot - hidden from people, filled by naive bots. See
+  // src/lib/validation/honeypot.ts.
+  company: "",
+};
 type ContactForm = typeof EMPTY_CONTACT_FORM;
 
 function getPacificNow() {
@@ -61,12 +59,9 @@ export default function ContactPage() {
 
   useEffect(() => {
     const { dayIdx, minutes } = getPacificNow();
-    const today = HOURS_DATA[dayIdx];
-    const isOpen = today.shifts.some(([sh, sm, eh, em]) => {
-      const start = sh * 60 + sm;
-      const end = eh * 60 + em;
-      return minutes >= start && minutes < end;
-    });
+    const isOpen = WEEKLY_HOURS[dayIdx].windows.some(
+      (window) => minutes >= window.start && minutes < window.end
+    );
     setStatus({ dayIdx, isOpen });
   }, []);
 
@@ -115,6 +110,7 @@ export default function ContactPage() {
   }
 
   const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterCompany, setNewsletterCompany] = useState("");
   const [newsletterState, setNewsletterState] = useState<
     | { status: "idle" }
     | { status: "submitting" }
@@ -132,7 +128,7 @@ export default function ContactPage() {
       const response = await fetch("/api/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newsletterEmail }),
+        body: JSON.stringify({ email: newsletterEmail, company: newsletterCompany }),
       });
       const data = await response.json().catch(() => null);
 
@@ -161,7 +157,7 @@ export default function ContactPage() {
     }
   }
 
-  const todayLabel = status ? HOURS_DATA[status.dayIdx].label : null;
+  const todayLabel = status ? WEEKLY_HOURS[status.dayIdx].label : null;
   const badgeText = status ? (status.isOpen ? "Open Now" : "Closed Now") : "Checking hours…";
   const badgeClass = status ? (status.isOpen ? "is-open" : "is-closed") : "";
 
@@ -193,6 +189,19 @@ export default function ContactPage() {
       <section className="contact-form-section">
         <div className="contact-grid">
           <form className="form-card" onSubmit={handleSubmit}>
+            {/* Honeypot: positioned off-screen rather than display:none, and
+                hidden from assistive tech. A person never sees or fills this;
+                a naive form-filling bot does. */}
+            <input
+              className="hp-field"
+              type="text"
+              name="company"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              value={form.company}
+              onChange={(e) => updateField("company", e.target.value)}
+            />
             <div className="form-row">
               <input
                 className="form-field"
@@ -276,6 +285,16 @@ export default function ContactPage() {
               exclusive offers — straight to your inbox.
             </p>
             <form onSubmit={handleNewsletterSubmit}>
+              <input
+                className="hp-field"
+                type="text"
+                name="company"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                value={newsletterCompany}
+                onChange={(e) => setNewsletterCompany(e.target.value)}
+              />
               <input
                 className="newsletter-field"
                 type="email"
@@ -401,15 +420,18 @@ export default function ContactPage() {
           </summary>
 
           <div className="hours-body">
-            {HOURS_ROWS.map((row, i) => (
-              <div className={`hours-row${status?.dayIdx === i ? " today" : ""}`} key={row.day}>
+            {WEEKLY_HOURS.map((day, i) => (
+              <div className={`hours-row${status?.dayIdx === i ? " today" : ""}`} key={WEEKDAY_NAMES[i]}>
                 <span className="hours-day">
-                  {row.day} <span className="today-tag">Today</span>
+                  {WEEKDAY_NAMES[i]} <span className="today-tag">Today</span>
                 </span>
                 <span className="hours-times">
-                  {row.times[0]}
-                  <br />
-                  {row.times[1]}
+                  {day.ranges.map((range, rangeIndex) => (
+                    <span key={range}>
+                      {rangeIndex > 0 && <br />}
+                      {range}
+                    </span>
+                  ))}
                 </span>
               </div>
             ))}

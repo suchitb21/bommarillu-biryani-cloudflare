@@ -10,11 +10,13 @@ export async function MenuPage({
   title,
   subtitle,
   source,
+  children,
 }: {
   menuName: string;
   title: string;
   subtitle: string;
   source: CartSource;
+  children?: React.ReactNode;
 }) {
   let menu;
   try {
@@ -43,6 +45,7 @@ export async function MenuPage({
         <div className="menu-page-header">
           <h1>{title}</h1>
           <p>{subtitle}</p>
+          {children}
         </div>
 
         {menu.sections.length === 0 ? (

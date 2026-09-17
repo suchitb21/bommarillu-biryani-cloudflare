@@ -78,7 +78,19 @@ export default function TermsPage() {
         allergens not disclosed to us directly.
       </div>
 
-      <h2>4. Pickup and delivery</h2>
+      <h2>4. Bone-in and boneless items</h2>
+      <div className="legal-notice">
+        Many of our chicken and mutton dishes are prepared bone-in by default, even when a
+        boneless version is also on the menu. If you require a specific item to be
+        strictly boneless, <strong>you must contact the restaurant directly</strong> by
+        phone at +1 425-420-0160 before or when you place your order to confirm it. Even
+        in dishes labeled or requested as boneless, chicken and other meat items may still
+        contain small or minuscule bone fragments as a natural result of butchering and
+        preparation. Please eat carefully and supervise children when serving these
+        dishes; we are not liable for injury arising from bone fragments in any order.
+      </div>
+
+      <h2>5. Pickup and delivery</h2>
       <ul>
         <li>
           Pickup times for online pickup orders must fall within our operating hours for
@@ -98,7 +110,7 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>5. Order timing and honesty</h2>
+      <h2>6. Order timing and honesty</h2>
       <ul>
         <li>
           Please do not attempt to place orders for times outside our operating hours, or
@@ -113,7 +125,7 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>6. Cancellations, changes and refunds</h2>
+      <h2>7. Cancellations, changes and refunds</h2>
       <ul>
         <li>
           To change or cancel an order, call us at +1 425-420-0160 as soon as possible.
@@ -127,7 +139,7 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>7. Our responsibility</h2>
+      <h2>8. Our responsibility</h2>
       <ul>
         <li>
           We take care to keep this website working and accurate, but we do not warrant
@@ -142,13 +154,13 @@ export default function TermsPage() {
         </li>
       </ul>
 
-      <h2>8. Changes to these Terms</h2>
+      <h2>9. Changes to these Terms</h2>
       <p>
         We may update these Terms from time to time. The version shown on this page at the
         time you order is the version that applies to your order.
       </p>
 
-      <h2>9. Contact</h2>
+      <h2>10. Contact</h2>
       <p className="legal-contact">
         Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052, United States
         &middot; +1 425-420-0160

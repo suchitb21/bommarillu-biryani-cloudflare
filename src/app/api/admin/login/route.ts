@@ -8,9 +8,14 @@ import {
 } from "@/lib/admin/config";
 import {
   clearAttempts,
+  clientKeyFromHeaders,
   isRateLimited,
-  recordFailedAttempt,
-} from "@/lib/admin/rate-limit";
+  recordAttempt,
+} from "@/lib/rate-limit";
+
+/** Five failures per 15 minutes, per client. */
+const RATE_LIMIT_MAX_ATTEMPTS = 5;
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
 /**
  * Exchanges the shared admin password for a signed session cookie.
@@ -20,10 +25,9 @@ import {
  * account exists" from "that value was wrong".
  */
 export async function POST(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  const clientKey = forwardedFor?.split(",")[0]?.trim() || "unknown";
+  const clientKey = `admin-login:${clientKeyFromHeaders(request.headers)}`;
 
-  if (isRateLimited(clientKey)) {
+  if (isRateLimited(clientKey, RATE_LIMIT_MAX_ATTEMPTS, RATE_LIMIT_WINDOW_MS)) {
     return NextResponse.json(
       { ok: false, error: "Too many attempts. Please wait 15 minutes and try again." },
       { status: 429 }
@@ -66,7 +70,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!valid) {
-    recordFailedAttempt(clientKey);
+    recordAttempt(clientKey, RATE_LIMIT_WINDOW_MS);
     return NextResponse.json(
       { ok: false, error: "Incorrect password." },
       { status: 401 }

@@ -1,0 +1,89 @@
+/* Shared chrome for the 404 and error pages. Self-contained on purpose: these
+   can render when something elsewhere has already failed, so they must not
+   depend on any other feature's stylesheet. */
+
+.system-page {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(2.5rem, 8vw, 6rem) 1.25rem;
+  background: var(--cream-2, #f7ead0);
+}
+
+.system-page-card {
+  width: 100%;
+  max-width: 560px;
+  text-align: center;
+  background: var(--cream, #fbf3e3);
+  border-radius: 24px;
+  padding: clamp(2rem, 5vw, 3rem);
+  box-shadow: 0 20px 40px rgba(59, 36, 23, 0.1);
+}
+
+.system-page-kicker {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange, #f0821e);
+  margin-bottom: 0.9rem;
+}
+
+.system-page-card h1 {
+  margin: 0 0 0.9rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.25;
+  color: var(--brown, #3b2417);
+}
+
+.system-page-card p {
+  margin: 0 auto 1.75rem;
+  max-width: 42ch;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--brown-soft, #6b5648);
+}
+
+.system-page-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.system-page-btn {
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.8rem 1.6rem;
+  background: var(--orange, #f0821e);
+  color: #fff;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.system-page-btn:hover {
+  opacity: 0.88;
+}
+
+.system-page-btn--ghost {
+  background: transparent;
+  border-color: var(--brown, #3b2417);
+  color: var(--brown, #3b2417);
+}
+.system-page-btn--ghost:hover {
+  opacity: 1;
+  background: rgba(59, 36, 23, 0.07);
+}
+
+.system-page-help {
+  margin: 1.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--brown-soft, #6b5648);
+}
+.system-page-help a {
+  color: var(--orange, #f0821e);
+}

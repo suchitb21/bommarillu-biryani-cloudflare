@@ -13,11 +13,11 @@ export default function AboutUsPage() {
           <div className="story-content">
             <span className="story-eyebrow">Our Story</span>
             <h2 className="story-heading">
-              <span className="story-heading-main">Rooted in Andhra Tradition,</span>
+              <span className="story-heading-main">Rooted in Hyderabad-Inspired Tradition,</span>
               <span className="story-heading-script">Served with Love</span>
             </h2>
             <p className="story-desc">
-              Bommarillu Biryani brings halal-certified, Andhra-style cooking to
+              Bommarillu Biryani brings halal-certified, Hyderabad-style cooking to
               Redmond, Washington — fresh ingredients, generous portions, and a
               signature biryani our regulars keep coming back for. Every order
               is layered by hand and slow-cooked the traditional dum way, just
@@ -123,7 +123,7 @@ export default function AboutUsPage() {
                   </svg>
                 </div>
                 <div>
-                  <div className="whyus-feature-title">Authentic Andhra Recipes</div>
+                  <div className="whyus-feature-title">Authentic Hyderabad-Style Recipes</div>
                   <p className="whyus-feature-sub">
                     Traditional dum-style cooking, sealed and slow-cooked the
                     old way, with a masala recipe true to its roots.

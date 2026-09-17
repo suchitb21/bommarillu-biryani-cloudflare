@@ -13,6 +13,7 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
+  text-decoration: none;
 }
 .logo-badge {
   width: clamp(52px, 5vw, 64px);
@@ -32,7 +33,12 @@
   align-items: center;
   gap: clamp(1.5rem, 3vw, 2.75rem);
 }
-.nav-links a {
+/* :not(.btn-pill) on both rules below - the "Order Online" pill is also an
+   <a> in here with its own white text on an orange background. Without the
+   exclusion, ".nav-links a"'s color (higher specificity than ".btn-pill"
+   alone) overrides the pill to brown-soft normally, and to orange-on-hover -
+   orange text on the pill's own orange background, unreadable. */
+.nav-links a:not(.btn-pill) {
   text-decoration: none;
   color: var(--brown-soft);
   font-weight: 500;
@@ -40,13 +46,14 @@
   white-space: nowrap;
   transition: color 0.2s;
 }
-.nav-links a:hover {
+.nav-links a:not(.btn-pill):hover {
   color: var(--orange);
 }
 .cart-link {
   position: relative;
   display: flex;
   align-items: center;
+  color: var(--brown);
 }
 .cart-badge {
   position: absolute;
@@ -100,6 +107,23 @@
   border-radius: 2px;
 }
 
+/* Home page only - matches the hero section's dark background. */
+.navbar--dark {
+  background: linear-gradient(165deg, #241209 0%, #170b06 100%);
+}
+.navbar--dark .nav-links a:not(.btn-pill) {
+  color: rgba(251, 243, 227, 0.85);
+}
+.navbar--dark .nav-links a:not(.btn-pill):hover {
+  color: var(--orange);
+}
+.navbar--dark .cart-link {
+  color: var(--cream);
+}
+.navbar--dark .hamburger span {
+  background: var(--cream);
+}
+
 @media (max-width: 900px) {
   .nav-links {
     position: absolute;
@@ -112,10 +136,23 @@
     gap: 1.25rem;
     padding: 1.5rem clamp(1.25rem, 5vw, 4.5rem) 2rem;
     box-shadow: 0 12px 20px rgba(59, 36, 23, 0.08);
-    display: none;
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-12px);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0.22s;
   }
   .nav-links.open {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0s;
+  }
+  .navbar--dark .nav-links {
+    background: #1c0f07;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.35);
   }
   .nav-links .btn-pill {
     width: 100%;

@@ -73,18 +73,14 @@ export function Footer() {
 
         <div className="footer-col">
           <h4>Order</h4>
-          <Link className="footer-order-btn" href="/order-online">
-            Order Online
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 12h14M13 6l6 6-6 6"
-                stroke="#fff"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </Link>
+          <div className="footer-order-buttons">
+            <Link className="footer-order-btn" href="/order-online">
+              Order Online
+            </Link>
+            <Link className="footer-order-btn" href="/catering">
+              Catering
+            </Link>
+          </div>
         </div>
       </div>
 

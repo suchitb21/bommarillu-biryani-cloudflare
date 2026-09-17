@@ -2,7 +2,9 @@
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(165deg, var(--cream) 0%, var(--cream-2) 100%);
+  background: radial-gradient(120% 140% at 85% 100%, #3a1810 0%, transparent 55%),
+    radial-gradient(90% 110% at 0% 100%, #1c2e16 0%, transparent 50%),
+    linear-gradient(165deg, #241209 0%, #170b06 100%);
 }
 .hero-inner {
   position: relative;
@@ -46,11 +48,24 @@
 
 .leaves {
   position: absolute;
-  top: -1.5rem;
+  top: -1rem;
   right: -1.5rem;
-  width: clamp(120px, 14vw, 190px);
+  width: clamp(150px, 17vw, 240px);
+  height: auto;
   z-index: 1;
-  opacity: 0.9;
+  opacity: 0.95;
+  pointer-events: none;
+}
+
+.spices {
+  position: absolute;
+  bottom: -2rem;
+  left: -2rem;
+  width: clamp(170px, 19vw, 260px);
+  height: auto;
+  z-index: 1;
+  opacity: 0.95;
+  pointer-events: none;
 }
 
 /* ---- text column ---- */
@@ -68,7 +83,7 @@
 .headline {
   font-size: clamp(2.6rem, 5.6vw, 4.6rem);
   font-weight: 800;
-  color: var(--brown);
+  color: var(--cream);
   line-height: 1.02;
   margin-top: 0.2rem;
   letter-spacing: -1px;
@@ -85,7 +100,7 @@
 }
 .desc {
   margin-top: 1.4rem;
-  color: var(--brown-soft);
+  color: rgba(251, 243, 227, 0.72);
   font-size: clamp(0.95rem, 1.15vw, 1.1rem);
   line-height: 1.7;
   max-width: 460px;
@@ -112,6 +127,15 @@
   justify-content: center;
   flex-shrink: 0;
 }
+.feature-icon--green {
+  background: var(--green);
+}
+.feature-icon--maroon {
+  background: var(--red);
+}
+.feature-icon--purple {
+  background: #6d4a86;
+}
 .feature-icon svg {
   width: 55%;
   height: 55%;
@@ -119,11 +143,11 @@
 .feature-title {
   font-weight: 600;
   font-size: 1.02rem;
-  color: var(--brown);
+  color: var(--cream);
 }
 .feature-sub {
   font-size: 0.85rem;
-  color: var(--brown-soft);
+  color: rgba(251, 243, 227, 0.6);
 }
 
 .order-btn {
@@ -185,31 +209,6 @@
   display: block;
   border-radius: 20px;
   filter: drop-shadow(0 25px 26px rgba(59, 36, 23, 0.35));
-}
-
-.dish-sound-toggle {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 7;
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: rgba(59, 36, 23, 0.55);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.dish-sound-toggle:hover {
-  background: rgba(59, 36, 23, 0.75);
-}
-.dish-sound-toggle svg {
-  width: 17px;
-  height: 17px;
 }
 
 /* ===================== BESTSELLERS ===================== */
@@ -658,6 +657,11 @@
     top: -0.5rem;
     right: -0.5rem;
     width: 110px;
+  }
+  .spices {
+    bottom: -0.5rem;
+    left: -0.5rem;
+    width: 130px;
   }
   .dish-wrap {
     max-width: none;

@@ -47,7 +47,6 @@ export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [canLoadVideo, setCanLoadVideo] = useState(false);
   const [videoEligible, setVideoEligible] = useState(true);
-  const [muted, setMuted] = useState(true);
 
   // A big chunk of visitors bounce straight off the order-entry modal into
   // /catering or /order-online without ever seeing the hero, so don't spend
@@ -113,22 +112,8 @@ export default function Home() {
         <div className="dot dot--ring" style={{ width: 18, height: 18, top: "28%", left: "48%" }} />
         <div className="dot dot--orange" style={{ width: 5, height: 5, top: "35%", left: "44%" }} />
 
-        <svg className="leaves" viewBox="0 0 170 170" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M170 0C150 20 120 30 100 55C85 74 78 100 90 125C110 110 130 90 145 65C158 44 168 22 170 0Z"
-            fill="#4c7a3d"
-            opacity="0.85"
-          />
-          <path
-            d="M150 10C130 30 105 45 90 68C110 60 132 48 150 30C160 20 165 12 150 10Z"
-            fill="#3a5e2f"
-            opacity="0.9"
-          />
-          <path
-            d="M170 40C155 55 138 65 128 82C142 78 158 68 168 55C173 48 175 42 170 40Z"
-            fill="#6f9a58"
-          />
-        </svg>
+        <img className="leaves" src="/images/leaves.webp" alt="" aria-hidden="true" />
+        <img className="spices" src="/images/spices.webp" alt="" aria-hidden="true" />
 
         <div className="hero-inner">
           <div className="hero-content">
@@ -142,7 +127,7 @@ export default function Home() {
 
             <div className="features">
               <div className="feature">
-                <div className="feature-icon">
+                <div className="feature-icon feature-icon--green">
                   <svg viewBox="0 0 24 24" fill="none">
                     <path
                       d="M4 11c0-4 3.5-7 8-7s8 3 8 7"
@@ -159,7 +144,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="feature">
-                <div className="feature-icon">
+                <div className="feature-icon feature-icon--maroon">
                   <svg viewBox="0 0 24 24" fill="none">
                     <path d="M12 3c-3 3-5 6-5 9a5 5 0 0 0 10 0c0-3-2-6-5-9Z" fill="#fff" />
                   </svg>
@@ -170,7 +155,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="feature">
-                <div className="feature-icon">
+                <div className="feature-icon feature-icon--purple">
                   <svg viewBox="0 0 24 24" fill="none">
                     <path
                       d="M12 21c-4-3-8-6-8-11a5 5 0 0 1 8-4 5 5 0 0 1 8 4c0 5-4 8-8 11Z"
@@ -205,14 +190,14 @@ export default function Home() {
             <svg viewBox="0 0 300 160" fill="none">
               <path
                 d="M42 18 C 15 28, 8 55, 28 68 C 46 79, 66 66, 60 48 C 55 33, 34 34, 34 52 C 34 90, 70 118, 118 118 C 175 118, 230 100, 270 65"
-                stroke="#3b2417"
+                stroke="#f0821e"
                 strokeWidth="9"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               <path
                 d="M270 65 L248 61 M270 65 L260 85"
-                stroke="#3b2417"
+                stroke="#f0821e"
                 strokeWidth="9"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -223,33 +208,19 @@ export default function Home() {
           <div className="hero-image">
             <div className="dish-wrap">
               {showVideo ? (
-                <>
-                  <video
-                    ref={videoRef}
-                    className="dish-photo"
-                    autoPlay
-                    loop
-                    muted={muted}
-                    playsInline
-                    preload="auto"
-                    poster="/images/biryani-poster.jpg"
-                    aria-label="Bommarillu Biryani's chicken biryani being freshly prepared"
-                  >
-                    <source src="/videos/biryani.webm" type="video/webm" />
-                  </video>
-                  <button
-                    type="button"
-                    className="dish-sound-toggle"
-                    onClick={() => {
-                      const next = !muted;
-                      setMuted(next);
-                      if (videoRef.current) videoRef.current.muted = next;
-                    }}
-                    aria-label={muted ? "Unmute video" : "Mute video"}
-                  >
-                    {muted ? <MutedIcon /> : <SoundIcon />}
-                  </button>
-                </>
+                <video
+                  ref={videoRef}
+                  className="dish-photo"
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="auto"
+                  poster="/images/biryani-poster.jpg"
+                  aria-label="Bommarillu Biryani's chicken biryani being freshly prepared"
+                >
+                  <source src="/videos/biryani.webm" type="video/webm" />
+                </video>
               ) : (
                 <img
                   className="dish-photo"
@@ -587,40 +558,6 @@ export default function Home() {
         </div>
       </section>
     </>
-  );
-}
-
-function MutedIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M4 9v6h4l5 5V4L8 9H4Z"
-        fill="currentColor"
-      />
-      <path
-        d="M16.5 8.5l4 7M20.5 8.5l-4 7"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function SoundIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M4 9v6h4l5 5V4L8 9H4Z"
-        fill="currentColor"
-      />
-      <path
-        d="M16.5 9a4.5 4.5 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }
 

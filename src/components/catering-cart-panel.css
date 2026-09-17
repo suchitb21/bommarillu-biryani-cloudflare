@@ -22,6 +22,27 @@
 .catering-bar-cta {
   color: var(--orange);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Full pill (border-radius: 999px) only reads well on one line - on narrow
+   screens the two spans wrap, and a 999px radius on that taller wrapped
+   shape balloons into the oversized rounded blob this is fixing. Widen it
+   to the screen instead so there's room to stay on one line, and drop to a
+   rounded-rectangle radius as a fallback for when it still wraps. */
+@media (max-width: 480px) {
+  .catering-bar {
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    transform: none;
+    width: auto;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-radius: 16px;
+    padding: 0.8rem 1.1rem;
+    font-size: 0.82rem;
+  }
 }
 
 .catering-drawer-overlay {

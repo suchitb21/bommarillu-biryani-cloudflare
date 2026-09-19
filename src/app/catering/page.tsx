@@ -9,7 +9,7 @@ export default function CateringPage() {
       <MenuPage
         menuName={SQUARE_MENU_NAMES.catering}
         title="Catering"
-        subtitle="Catering Order should be done atleast 2 hours prior !"
+        subtitle="Catering Order should be done atleast 2 hours prior ! All mutton items on weekends only ( FRI - SAT - SUN )"
         source="catering"
       >
         <div className="tray-guide">

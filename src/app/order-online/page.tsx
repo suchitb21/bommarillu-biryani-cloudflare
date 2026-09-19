@@ -20,7 +20,7 @@ export default function OrderOnlinePage() {
       <MenuPage
         menuName={SQUARE_MENU_NAMES.onlineOrdering}
         title="Order Online"
-        subtitle="Browse the full menu and order pickup right here - or use the delivery link above for delivery."
+        subtitle="Browse the full menu and order pickup right here - or use the delivery link above for delivery. All mutton items on weekends only ( FRI - SAT - SUN )"
         source="menu"
       />
     </>

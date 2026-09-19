@@ -9,7 +9,7 @@ export default function CateringPage() {
       <MenuPage
         menuName={SQUARE_MENU_NAMES.catering}
         title="Catering"
-        subtitle="Feeding a crowd? Order family-style trays and catering portions for your next event."
+        subtitle="Catering Order should be done atleast 2 hours prior !"
         source="catering"
       >
         <div className="tray-guide">

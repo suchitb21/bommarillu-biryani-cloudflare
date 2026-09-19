@@ -184,6 +184,7 @@ export default function Home() {
                 </svg>
               </span>
             </Link>
+            <img className="spices spices--mobile" src="/images/spices.webp" alt="" aria-hidden="true" />
           </div>
 
           <div className="cta-arrow">

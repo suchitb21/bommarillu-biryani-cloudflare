@@ -28,8 +28,12 @@ export default function TermsPage() {
           Our online Order Online (pickup) and Catering ordering are available only while
           the restaurant is open, in line with the operating hours shown in our footer and
           on the website. Online pickup orders are for the current day and need roughly 20
-          minutes&rsquo; lead time. Catering orders need at least 24 hours&rsquo; notice and
-          a chosen event time that falls inside our operating hours.
+          minutes&rsquo; lead time. Catering orders need at least 2 hours&rsquo; notice and
+          a chosen event time that falls inside our operating hours. This 2-hour minimum
+          is strictly the time we need to prepare a catering order &mdash; it does
+          <strong> not</strong> include delivery time. If you choose delivery for a
+          catering order, please plan for additional time on top of the 2-hour prep
+          window so the food arrives by your event time.
         </li>
         <li>
           The menu and prices are set by the restaurant and may change at any time without

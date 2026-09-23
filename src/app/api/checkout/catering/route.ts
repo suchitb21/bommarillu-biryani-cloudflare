@@ -5,7 +5,7 @@ import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the catering checkout form uses to build its date/slot list.
-const MIN_LEAD_MINUTES = 24 * 60;
+const MIN_LEAD_MINUTES = 2 * 60;
 
 export async function POST(request: NextRequest): Promise<NextResponse<CheckoutResponse>> {
   let body: CateringCheckoutRequest;
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   const instant = zonedDateTimeToUtc(body.eventDate, body.timeSlot);
   if (instant.getTime() < Date.now() + (MIN_LEAD_MINUTES - 1) * 60_000) {
     return NextResponse.json(
-      { ok: false, error: "Catering orders need at least 24 hours' notice - please choose a later time." },
+      { ok: false, error: "Catering orders need at least 2 hours' notice - please choose a later time." },
       { status: 400 }
     );
   }

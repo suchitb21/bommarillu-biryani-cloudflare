@@ -113,7 +113,7 @@ export function CateringCartPanel() {
                   <CheckoutForm
                     showEventDate
                     requiresWeekendEventDate={cartRequiresWeekendEventDate(cart.lines)}
-                    minLeadMinutes={24 * 60}
+                    minLeadMinutes={2 * 60}
                     deliveryHelpText="Delivery for catering orders is arranged directly by our staff after you check out - we'll confirm details by phone."
                     submitLabel="Pay now"
                     totalCents={cart.totalCents}

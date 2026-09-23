@@ -467,7 +467,7 @@ textarea.form-field {
 @media (max-width: 640px) {
   .form-row {
     grid-template-columns: 1fr;
-    gap: 0;
+    gap: 1rem;
   }
 }
 

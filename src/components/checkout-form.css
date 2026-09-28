@@ -89,6 +89,13 @@
   color: var(--orange-dark);
 }
 
+.checkout-method-btn--disabled,
+.checkout-method-btn--disabled:hover {
+  background: rgba(59, 36, 23, 0.05);
+  color: rgba(59, 36, 23, 0.35);
+  cursor: not-allowed;
+}
+
 .checkout-help {
   font-size: 0.78rem;
   color: var(--brown-soft);

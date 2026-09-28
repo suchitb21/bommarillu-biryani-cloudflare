@@ -50,11 +50,14 @@ export function CheckoutForm({
    * (catering: delivery is staff-arranged). Ignored when
    * `externalDeliveryHref` is set. */
   deliveryHelpText?: string;
-  /** Order Online only. When set, delivery is NOT collected in this form -
-   * the Delivery button opens this URL (the Cash App / Square ordering
-   * profile, the only surface that can dispatch a courier) in a new tab,
-   * and this checkout handles pickup only. */
-  externalDeliveryHref?: string;
+  /** Order Online only. Omit entirely for Catering (in-form delivery).
+   * A string opens that URL (the Cash App / Square ordering profile) in a
+   * new tab instead of collecting delivery in this form. `null` means Order
+   * Online delivery exists as a concept but currently has no working link -
+   * the Delivery button renders disabled instead of silently falling back
+   * to the in-form address flow, which this checkout doesn't actually
+   * dispatch a courier for. */
+  externalDeliveryHref?: string | null;
   submitLabel: string;
   /** Pre-tax subtotal in cents - sales tax is computed from the shared
    * SALES_TAX constant and shown as its own row (Square charges the same
@@ -104,9 +107,12 @@ export function CheckoutForm({
 
   const minEventDate = showEventDate ? earliestDateForLeadTime(minLeadMinutes) : undefined;
 
-  // Order Online: delivery lives on the Cash App / Square ordering profile,
-  // so when externalDeliveryHref is set the only in-form method is pickup.
-  const hasExternalDelivery = Boolean(externalDeliveryHref);
+  // Order Online: delivery lives on the Cash App / Square ordering profile
+  // (or is temporarily disabled, see externalDeliveryHref's null case), so
+  // when this prop is passed at all - string or null - the only in-form
+  // method is pickup. Catering omits the prop entirely and uses in-form
+  // delivery instead.
+  const hasExternalDelivery = externalDeliveryHref !== undefined;
 
   // Order Online (same-day pickup) is only "active" while the restaurant is
   // open per its weekly timetable. Catering orders a future event date, so
@@ -214,14 +220,25 @@ export function CheckoutForm({
           >
             Pickup
           </button>
-          {externalDeliveryHref ? (
-            <button
-              type="button"
-              className="checkout-method-btn"
-              onClick={() => window.open(externalDeliveryHref, "_blank", "noopener")}
-            >
-              Delivery
-            </button>
+          {hasExternalDelivery ? (
+            externalDeliveryHref ? (
+              <button
+                type="button"
+                className="checkout-method-btn"
+                onClick={() => window.open(externalDeliveryHref, "_blank", "noopener")}
+              >
+                Delivery
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="checkout-method-btn checkout-method-btn--disabled"
+                disabled
+                aria-disabled="true"
+              >
+                Delivery
+              </button>
+            )
           ) : (
             <button
               type="button"
@@ -240,6 +257,10 @@ export function CheckoutForm({
           <p className="checkout-help">
             Delivery orders are placed on our delivery ordering page so a courier can be
             dispatched &mdash; same menu and prices. This form is for pickup.
+          </p>
+        ) : hasExternalDelivery ? (
+          <p className="checkout-help">
+            Delivery is temporarily unavailable &mdash; please choose pickup, or check back soon.
           </p>
         ) : fulfillmentMethod === "delivery" && deliveryHelpText ? (
           <p className="checkout-help">{deliveryHelpText}</p>

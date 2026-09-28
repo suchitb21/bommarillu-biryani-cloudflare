@@ -89,6 +89,7 @@ export function OrderEntryModal() {
   }
 
   function goDelivery() {
+    if (!DELIVERY_ORDERING_URL) return;
     // Redirect (same tab) to the ordering profile's delivery surface.
     window.location.assign(DELIVERY_ORDERING_URL);
   }
@@ -144,7 +145,17 @@ export function OrderEntryModal() {
               <button type="button" className="order-entry-btn order-entry-btn--primary" onClick={() => go("/order-online")}>
                 Pickup on this site
               </button>
-              <button type="button" className="order-entry-btn order-entry-btn--delivery" onClick={goDelivery}>
+              <button
+                type="button"
+                className={
+                  DELIVERY_ORDERING_URL
+                    ? "order-entry-btn order-entry-btn--delivery"
+                    : "order-entry-btn order-entry-btn--delivery order-entry-btn--disabled"
+                }
+                onClick={goDelivery}
+                disabled={!DELIVERY_ORDERING_URL}
+                aria-disabled={!DELIVERY_ORDERING_URL}
+              >
                 Delivery
               </button>
             </div>

@@ -186,3 +186,8 @@
 .menu-page-delivery-note a:hover {
   color: var(--yellow);
 }
+
+.menu-page-delivery-note--disabled {
+  background: rgba(59, 36, 23, 0.08);
+  color: var(--brown-soft);
+}

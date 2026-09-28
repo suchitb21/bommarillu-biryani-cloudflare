@@ -145,6 +145,14 @@
   color: #fff;
 }
 
+.order-entry-btn--disabled,
+.order-entry-btn--disabled:hover {
+  border-color: rgba(59, 36, 23, 0.25);
+  color: rgba(59, 36, 23, 0.4);
+  background: rgba(59, 36, 23, 0.05);
+  cursor: not-allowed;
+}
+
 .order-entry-skip {
   margin-top: 1.25rem;
   border: none;

@@ -13,13 +13,5 @@
  * full custom checkout) and Catering (the "Catering" catalog). Any
  * "delivery" intent surfaces this URL. See design.md.
  */
-/**
- * Temporarily disabled (null) - the Cash App delivery link was pulled and a
- * replacement is coming shortly. Every call site below treats `null` as
- * "delivery exists as a concept but has no working link right now" and
- * greys out its own delivery button/note accordingly, rather than crashing
- * or silently falling back to an unsupported in-app delivery flow.
- *
- * To re-enable: paste the new URL back in as a string.
- */
-export const DELIVERY_ORDERING_URL: string | null = null;
+export const DELIVERY_ORDERING_URL: string | null =
+  "https://cash.app/$bommarilluindiancuis/delivery";

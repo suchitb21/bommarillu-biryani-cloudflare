@@ -215,6 +215,22 @@
   background: rgba(59, 36, 23, 0.12);
 }
 
+@media (max-width: 480px) {
+  .admin-tabs {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    background: transparent;
+    padding: 0;
+    gap: 0.6rem;
+  }
+  .admin-tab {
+    width: 100%;
+    justify-content: center;
+    background: rgba(59, 36, 23, 0.08);
+  }
+}
+
 /* ---------- Order cards ---------- */
 
 .admin-order-list {

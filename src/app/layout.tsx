@@ -66,6 +66,9 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} | Hyderabadi Biryani & Indian Restaurant in Redmond, WA`,
     description: SITE_DESCRIPTION,
   },
+  verification: {
+    google: "jwPDP56Os-4N8P8OyzZzV0D-erNZtXJK4699RIWilDo",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -197,6 +197,11 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
                 amount: BigInt(args.deliveryFeeCents ?? 0),
                 currency: "USD",
               },
+              // Required by Square's Orders API. TOTAL_PHASE applies the fee
+              // after tax is calculated on the subtotal, which is also the
+              // only calculation phase Square allows for a non-taxable
+              // service charge (see OrderServiceCharge.calculationPhase).
+              calculationPhase: "TOTAL_PHASE",
               taxable: false,
               scope: "ORDER",
             },

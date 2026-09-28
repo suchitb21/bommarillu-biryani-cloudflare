@@ -57,9 +57,6 @@ export default function TermsPage() {
           hosted checkout. A 10.4% sales tax is applied to food items at checkout.
         </li>
         <li>
-          Catering orders have a $500 minimum pre-tax subtotal to check out.
-        </li>
-        <li>
           Catering orders that choose delivery include a flat, non-taxable $70 delivery
           fee, which is displayed at checkout.
         </li>

@@ -8,7 +8,6 @@ import { useCateringCart } from "@/lib/cart/cart-context";
 import { cartRequiresWeekendEventDate, lineTotalCents, type CartLine } from "@/lib/cart/types";
 import { CheckoutForm, type CheckoutFormValues } from "./checkout-form";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
-import { CATERING_MINIMUM_ORDER_CENTS } from "@/lib/checkout/catering-minimum";
 
 function formatMoney(cents: number): string {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -24,9 +23,6 @@ export function CateringCartPanel() {
   const [step, setStep] = useState<"cart" | "checkout">("cart");
 
   if (cart.lines.length === 0) return null;
-
-  const belowMinimum = cart.totalCents < CATERING_MINIMUM_ORDER_CENTS;
-  const remainingToMinimumCents = CATERING_MINIMUM_ORDER_CENTS - cart.totalCents;
 
   async function handleCheckout(values: CheckoutFormValues) {
     const body: CateringCheckoutRequest = {
@@ -105,18 +101,10 @@ export function CateringCartPanel() {
                     </button>
                   </div>
 
-                  {belowMinimum ? (
-                    <p className="catering-min-notice">
-                      Catering orders have a {formatMoney(CATERING_MINIMUM_ORDER_CENTS)} minimum
-                      &mdash; add {formatMoney(remainingToMinimumCents)} more to continue.
-                    </p>
-                  ) : null}
-
                   <button
                     type="button"
                     className="catering-continue-btn"
                     onClick={() => setStep("checkout")}
-                    disabled={belowMinimum}
                   >
                     Continue to details
                   </button>

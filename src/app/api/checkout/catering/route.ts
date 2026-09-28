@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckout } from "@/lib/checkout/build-order";
 import { isTimeWithinOpenHours, isWeekendDate, zonedDateTimeToUtc } from "@/lib/time-slots";
-import { cartRequiresWeekendEventDate, lineTotalCents } from "@/lib/cart/types";
-import { CATERING_MINIMUM_ORDER_CENTS } from "@/lib/checkout/catering-minimum";
+import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the catering checkout form uses to build its date/slot list.
@@ -19,19 +18,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   if (!body.lines?.length) {
     return NextResponse.json({ ok: false, error: "Your catering order is empty." }, { status: 400 });
   }
-
-  // Defense in depth: don't trust the client's minimum-order gating alone.
-  const subtotalCents = body.lines.reduce((sum, line) => sum + lineTotalCents(line), 0);
-  if (subtotalCents < CATERING_MINIMUM_ORDER_CENTS) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: `Catering orders have a $${(CATERING_MINIMUM_ORDER_CENTS / 100).toFixed(2)} minimum - please add more to your order.`,
-      },
-      { status: 400 }
-    );
-  }
-
   if (!body.name?.trim() || !body.phone?.trim()) {
     return NextResponse.json({ ok: false, error: "Name and phone are required." }, { status: 400 });
   }

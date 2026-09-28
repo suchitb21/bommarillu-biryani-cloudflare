@@ -57,8 +57,12 @@ export default function TermsPage() {
           hosted checkout. A 10.4% sales tax is applied to food items at checkout.
         </li>
         <li>
-          Catering orders that choose delivery include a flat, non-taxable $70 delivery
-          fee, which is displayed at checkout.
+          Catering orders that choose delivery include a non-taxable delivery fee, based
+          on the distance you select at checkout: up to 6 miles is $40, 6&ndash;10 miles is
+          $60, 10&ndash;15 miles is $80, and 15&ndash;20 miles is $100. We do not deliver
+          beyond 20 miles. You choose your own distance band at checkout &mdash; see
+          &ldquo;Order timing and honesty&rdquo; below for what happens if that turns out to
+          be inaccurate.
         </li>
         <li>
           Tipping is optional and in your control. Tips are paid to the restaurant&rsquo;s
@@ -108,10 +112,8 @@ export default function TermsPage() {
           and catering delivery is arranged directly with the restaurant by our staff.
         </li>
         <li>
-          We serve the greater Redmond area (within roughly 20 miles of 17020 Avondale
-          Way, Redmond, WA 98052). A delivery address beyond that range may be declined,
-          or may be accepted only with an additional charge discussed and agreed with the
-          restaurant by phone before the order is confirmed.
+          We deliver catering orders only within 20 miles of 17020 Avondale Way, Redmond,
+          WA 98052. We do not offer delivery beyond that distance, at any price.
         </li>
       </ul>
 
@@ -121,6 +123,17 @@ export default function TermsPage() {
           Please do not attempt to place orders for times outside our operating hours, or
           with pickup/delivery information that is inaccurate, misleading, or intended to
           bypass our lead times, delivery-area rules, or fees.
+        </li>
+        <li>
+          Catering delivery pricing is banded by distance, and you select the band that
+          matches how far you are from the restaurant &mdash; we do not independently
+          verify it before charging you. <strong>If you select a distance band that
+          understates how far you actually are, or otherwise misrepresent your delivery
+          distance,</strong> we may cancel the order, charge you the difference between
+          what you paid and the correct fee for your actual distance as a financial
+          penalty, and/or decline to fulfill the order without a refund of any
+          non-refundable costs already incurred. We do not deliver beyond 20 miles under
+          any circumstances, regardless of what is selected at checkout.
         </li>
         <li>
           We may verify large or unusual orders by phone, and we may cancel orders placed

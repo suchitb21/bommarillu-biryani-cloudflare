@@ -6,7 +6,7 @@ import { zonedDateTimeToUtc } from "@/lib/time-slots";
 import type { CartLine } from "@/lib/cart/types";
 import type { CheckoutAddress, CheckoutChannel, FulfillmentMethod } from "./types";
 import { SALES_TAX_NAME, SALES_TAX_PERCENT } from "./tax";
-import { CATERING_DELIVERY_FEE_CENTS, CATERING_DELIVERY_FEE_NAME } from "./delivery-fee";
+import { CATERING_DELIVERY_FEE_NAME } from "./delivery-fee";
 
 /**
  * Line items reference the real, live catalog by id and let Square resolve
@@ -119,6 +119,10 @@ export type CreateCheckoutArgs = {
   noteContext: string;
   /** Catering only - customer's free-text special instructions. */
   specialInstructions?: string;
+  /** Catering "delivery" only - the fee amount, already resolved server-side
+   * from the customer's chosen distance band (see delivery-fee.ts). Omitted
+   * (or a pickup order) means no delivery service charge is added. */
+  deliveryFeeCents?: number;
   /** Structured channel tag, written to `order.metadata.channel`. The prose
    * `noteContext` above is only ever used for the fulfillment note. */
   channel: CheckoutChannel;
@@ -146,10 +150,10 @@ export type CreateCheckoutArgs = {
  *   tax is configured for Square's hosted-ordering surfaces, not on catalog
  *   items), so we add the tax ourselves - the same constant the checkout
  *   forms display, meaning Square charges what the customer saw.
- * - catering "delivery" orders also get a flat NON-TAXABLE $70 delivery fee
- *   (CATERING_DELIVERY_FEE_CENTS) as an order service charge with
- *   `taxable: false`, so it sits outside the tax base. Pickup orders have
- *   no fee.
+ * - catering "delivery" orders also get a NON-TAXABLE delivery fee (amount
+ *   banded by distance - see `deliveryFeeCents` and delivery-fee.ts) as an
+ *   order service charge with `taxable: false`, so it sits outside the tax
+ *   base. Pickup orders have no fee.
  * - catalog-referenced line items only - prices are Square's, never ours.
  */
 export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: string }> {
@@ -163,10 +167,10 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
   const fulfillment = buildFulfillment(args);
 
   // Only catering can be "delivery" on this site (the Order Online route is
-  // pickup-only), so a delivery order gets the flat, NON-TAXABLE $70 fee as
-  // an order service charge - excluded from the tax base above, and shown as
-  // its own row on the catering form (same constant).
-  const isDelivery = args.fulfillmentMethod === "delivery";
+  // pickup-only), so a delivery order gets the NON-TAXABLE, distance-banded
+  // fee as an order service charge - excluded from the tax base above, and
+  // shown as its own row on the catering form.
+  const isDelivery = args.fulfillmentMethod === "delivery" && Boolean(args.deliveryFeeCents);
 
   const order: Square.Order = {
     locationId,
@@ -190,7 +194,7 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
               uid: "catering-delivery-fee",
               name: CATERING_DELIVERY_FEE_NAME,
               amountMoney: {
-                amount: BigInt(CATERING_DELIVERY_FEE_CENTS),
+                amount: BigInt(args.deliveryFeeCents ?? 0),
                 currency: "USD",
               },
               taxable: false,

@@ -40,6 +40,10 @@ export type CateringCheckoutRequest = {
   fulfillmentMethod: FulfillmentMethod;
   /** Required when fulfillmentMethod is "delivery". */
   address?: CheckoutAddress;
+  /** Required when fulfillmentMethod is "delivery" - the customer's
+   * self-selected distance band (see CATERING_DELIVERY_TIERS in
+   * delivery-fee.ts), which drives the delivery fee. */
+  deliveryDistanceTierId?: string;
   /** "YYYY-MM-DD", Pacific calendar date of the event. */
   eventDate: string;
   /** "HH:mm", always Pacific time. */

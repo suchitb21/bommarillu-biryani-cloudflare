@@ -12,13 +12,21 @@ import {
 } from "@/lib/time-slots";
 import type { CheckoutAddress, FulfillmentMethod } from "@/lib/checkout/types";
 import { computeSalesTaxCents, SALES_TAX_NAME, SALES_TAX_PERCENT } from "@/lib/checkout/tax";
-import { CATERING_DELIVERY_FEE_CENTS, CATERING_DELIVERY_FEE_NAME } from "@/lib/checkout/delivery-fee";
+import {
+  CATERING_DELIVERY_FEE_NAME,
+  CATERING_DELIVERY_MAX_MILES,
+  CATERING_DELIVERY_TIERS,
+  getCateringDeliveryTier,
+} from "@/lib/checkout/delivery-fee";
 
 export type CheckoutFormValues = {
   name: string;
   phone: string;
   fulfillmentMethod: FulfillmentMethod;
   address?: CheckoutAddress;
+  /** Catering delivery only - the customer's self-selected distance band id
+   * (see CATERING_DELIVERY_TIERS in delivery-fee.ts). */
+  deliveryDistanceTierId?: string;
   eventDate?: string;
   timeSlot: string;
   /** Catering only - free-text kitchen instructions. */
@@ -73,6 +81,7 @@ export function CheckoutForm({
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [deliveryDistanceTierId, setDeliveryDistanceTierId] = useState("");
   const [eventDate, setEventDate] = useState(() =>
     showEventDate ? earliestDateForLeadTime(minLeadMinutes) : todayInRestaurantTimeZone()
   );
@@ -86,11 +95,13 @@ export function CheckoutForm({
   // the Square order, so Square charges exactly what this form shows.
   const salesTaxCents = computeSalesTaxCents(totalCents);
 
-  // Catering "delivery" carries a flat NON-TAXABLE $70 delivery fee - shown
-  // as its own row and kept OUT of the tax base, matching the order service
-  // charge Square receives (`taxable: false`).
-  const hasDeliveryFee = showEventDate && fulfillmentMethod === "delivery";
-  const deliveryFeeCents = hasDeliveryFee ? CATERING_DELIVERY_FEE_CENTS : 0;
+  // Catering "delivery" carries a NON-TAXABLE delivery fee, banded by the
+  // customer's self-selected distance - shown as its own row and kept OUT
+  // of the tax base, matching the order service charge Square receives
+  // (`taxable: false`).
+  const selectedDeliveryTier = getCateringDeliveryTier(deliveryDistanceTierId);
+  const hasDeliveryFee = showEventDate && fulfillmentMethod === "delivery" && Boolean(selectedDeliveryTier);
+  const deliveryFeeCents = selectedDeliveryTier?.feeCents ?? 0;
   const grandTotalCents = totalCents + salesTaxCents + deliveryFeeCents;
 
   const dateForSlots = showEventDate ? eventDate : todayInRestaurantTimeZone();
@@ -145,6 +156,9 @@ export function CheckoutForm({
       );
     }
     if (!selectedTimeSlot) return setError("Please choose a time.");
+    if (fulfillmentMethod === "delivery" && !selectedDeliveryTier) {
+      return setError("Please select how far you are from the restaurant.");
+    }
     if (
       fulfillmentMethod === "delivery" &&
       (!addressLine1.trim() || !city.trim() || !state.trim() || !postalCode.trim())
@@ -171,6 +185,7 @@ export function CheckoutForm({
                 postalCode: postalCode.trim(),
               }
             : undefined,
+        deliveryDistanceTierId: fulfillmentMethod === "delivery" ? deliveryDistanceTierId : undefined,
         eventDate: showEventDate ? eventDate : undefined,
         timeSlot: selectedTimeSlot,
         specialInstructions: showEventDate ? specialInstructions.trim() || undefined : undefined,
@@ -269,6 +284,26 @@ export function CheckoutForm({
 
       {fulfillmentMethod === "delivery" ? (
         <>
+          <div className="checkout-field">
+            <label htmlFor="checkout-delivery-distance">How far are you from the restaurant?</label>
+            <select
+              id="checkout-delivery-distance"
+              value={deliveryDistanceTierId}
+              onChange={(e) => setDeliveryDistanceTierId(e.target.value)}
+            >
+              <option value="">Select distance&hellip;</option>
+              {CATERING_DELIVERY_TIERS.map((tier) => (
+                <option key={tier.id} value={tier.id}>
+                  {tier.label} &mdash; {formatMoney(tier.feeCents)}
+                </option>
+              ))}
+            </select>
+            <p className="checkout-help">
+              Please choose your actual distance from the restaurant &mdash; misrepresenting
+              it can mean the order is cancelled and a penalty charged. We do not deliver
+              beyond {CATERING_DELIVERY_MAX_MILES} miles.
+            </p>
+          </div>
           <div className="checkout-field">
             <label htmlFor="checkout-address1">Address</label>
             <input
@@ -407,7 +442,7 @@ export function CheckoutForm({
             {hasDeliveryFee ? (
               <div className="checkout-totals-row">
                 <span>
-                  {CATERING_DELIVERY_FEE_NAME} (non-taxable)
+                  {CATERING_DELIVERY_FEE_NAME} (non-taxable) &mdash; {selectedDeliveryTier?.label}
                 </span>
                 <span>{formatMoney(deliveryFeeCents)}</span>
               </div>
@@ -453,7 +488,12 @@ export function CheckoutForm({
           <button
             type="submit"
             className="checkout-submit-btn"
-            disabled={!agreedToTerms || submitting || slots.length === 0}
+            disabled={
+              !agreedToTerms ||
+              submitting ||
+              slots.length === 0 ||
+              (fulfillmentMethod === "delivery" && !selectedDeliveryTier)
+            }
           >
             <span>{submitting ? "Redirecting to payment..." : submitLabel}</span>
             <span>{formatMoney(grandTotalCents)}</span>

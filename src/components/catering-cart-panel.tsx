@@ -30,6 +30,7 @@ export function CateringCartPanel() {
       phone: values.phone,
       fulfillmentMethod: values.fulfillmentMethod,
       address: values.address,
+      deliveryDistanceTierId: values.deliveryDistanceTierId,
       eventDate: values.eventDate ?? "",
       timeSlot: values.timeSlot,
       specialInstructions: values.specialInstructions,

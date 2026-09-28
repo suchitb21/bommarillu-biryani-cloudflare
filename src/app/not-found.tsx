@@ -8,7 +8,7 @@ import "./system-pages.css";
  * be indexed even though crawlers will find them.
  */
 export const metadata: Metadata = {
-  title: "Page not found | Bommarillu Biryani",
+  title: "Page not found",
   robots: { index: false, follow: false },
 };
 
@@ -35,7 +35,7 @@ export default function NotFound() {
         </div>
         <p className="system-page-help">
           Need a hand? Call us on{" "}
-          <a href="tel:+14254200160">+1 425-420-0160</a>.
+          <a href="tel:+14259996271">+1 425-999-6271</a>.
         </p>
       </div>
     </section>

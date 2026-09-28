@@ -78,6 +78,24 @@ export function Footer() {
                 <circle cx="17.2" cy="6.8" r="1.1" fill="#fbf3e3" />
               </svg>
             </a>
+            <a
+              href="https://wa.me/14259996271"
+              aria-label="WhatsApp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.7-1.2A9 9 0 1 0 12 3Z"
+                  stroke="#fbf3e3"
+                  strokeWidth="1.6"
+                />
+                <path
+                  d="M8.5 8.5c0 4 3 7 7 7 .8 0 1-.4 1-1v-1.2l-2.2-.8-.8 1c-1.2-.5-2.5-1.8-3-3l1-.8-.8-2.2H8.5Z"
+                  fill="#fbf3e3"
+                />
+              </svg>
+            </a>
           </div>
         </div>
 

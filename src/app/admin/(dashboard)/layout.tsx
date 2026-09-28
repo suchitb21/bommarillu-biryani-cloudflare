@@ -8,7 +8,7 @@ import { AdminLogoutButton } from "@/components/admin-logout-button";
 import "../admin.css";
 
 export const metadata: Metadata = {
-  title: "Admin · Bommarillu Biryani",
+  title: "Admin",
   robots: { index: false, follow: false },
 };
 

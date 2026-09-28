@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import { MenuPage } from "@/components/menu-page";
 import { StoreClock } from "@/components/store-clock";
 import { SQUARE_MENU_NAMES } from "@/lib/square/config";
 import { DELIVERY_ORDERING_URL } from "@/lib/delivery";
+
+export const metadata: Metadata = {
+  title: "Order Online",
+  description:
+    "Order authentic Hyderabadi chicken, mutton, and veg biryani plus non-veg appetizers for pickup in Redmond, WA. Browse the full menu and order online.",
+  alternates: { canonical: "/order-online" },
+};
 
 export default function OrderOnlinePage() {
   return (

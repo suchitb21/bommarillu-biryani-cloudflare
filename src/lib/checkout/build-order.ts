@@ -146,7 +146,7 @@ export type CreateCheckoutArgs = {
  *   tax is configured for Square's hosted-ordering surfaces, not on catalog
  *   items), so we add the tax ourselves - the same constant the checkout
  *   forms display, meaning Square charges what the customer saw.
- * - catering "delivery" orders also get a flat NON-TAXABLE $100 delivery fee
+ * - catering "delivery" orders also get a flat NON-TAXABLE $70 delivery fee
  *   (CATERING_DELIVERY_FEE_CENTS) as an order service charge with
  *   `taxable: false`, so it sits outside the tax base. Pickup orders have
  *   no fee.
@@ -163,7 +163,7 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
   const fulfillment = buildFulfillment(args);
 
   // Only catering can be "delivery" on this site (the Order Online route is
-  // pickup-only), so a delivery order gets the flat, NON-TAXABLE $100 fee as
+  // pickup-only), so a delivery order gets the flat, NON-TAXABLE $70 fee as
   // an order service charge - excluded from the tax base above, and shown as
   // its own row on the catering form (same constant).
   const isDelivery = args.fulfillmentMethod === "delivery";

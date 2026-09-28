@@ -1,5 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import "./about-us.css";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "Bommarillu Biryani brings halal-certified, Hyderabad-style cooking to Redmond, Washington — fresh ingredients, generous portions, and a signature biryani made the traditional dum way.",
+  alternates: { canonical: "/about-us" },
+};
 
 export default function AboutUsPage() {
   return (

@@ -3,7 +3,7 @@ import { AdminLoginForm } from "@/components/admin-login-form";
 import "../admin.css";
 
 export const metadata: Metadata = {
-  title: "Admin sign in · Bommarillu Biryani",
+  title: "Admin sign in",
   robots: { index: false, follow: false },
 };
 

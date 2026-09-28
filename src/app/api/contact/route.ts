@@ -13,7 +13,7 @@ const RATE_LIMIT_MAX_SUBMISSIONS = 5;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
 
 const CONTACT_FALLBACK =
-  "Please try again, or call us at +1 425-420-0160.";
+  "Please try again, or call us at +1 425-999-6271.";
 
 /**
  * Receives the contact form on /contact and stores the message in Postgres.
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: `Too many messages sent. Please wait a few minutes and try again, or call us at +1 425-420-0160.`,
+        error: `Too many messages sent. Please wait a few minutes and try again, or call us at +1 425-999-6271.`,
       },
       { status: 429 }
     );

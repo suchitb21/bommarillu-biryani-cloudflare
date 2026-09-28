@@ -13,4 +13,4 @@
  * Client + server safe (no "server-only" import).
  */
 export const CATERING_DELIVERY_FEE_NAME = "Delivery fee";
-export const CATERING_DELIVERY_FEE_CENTS = 10000; // $100.00
+export const CATERING_DELIVERY_FEE_CENTS = 7000; // $70.00

@@ -114,6 +114,16 @@
   flex: 1;
 }
 
+.catering-min-notice {
+  margin-top: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(240, 130, 30, 0.1);
+  border-radius: 10px;
+  color: var(--brown);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .catering-continue-btn {
   width: 100%;
   margin-top: 1.25rem;
@@ -129,6 +139,11 @@
 
 .catering-continue-btn:hover {
   background: var(--orange-dark);
+}
+
+.catering-continue-btn:disabled {
+  background: rgba(59, 36, 23, 0.25);
+  cursor: not-allowed;
 }
 
 .catering-back-btn {

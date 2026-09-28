@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import { MenuPage } from "@/components/menu-page";
 import { CateringCartPanel } from "@/components/catering-cart-panel";
 import { SQUARE_MENU_NAMES } from "@/lib/square/config";
 import "./catering.css";
+
+export const metadata: Metadata = {
+  title: "Catering",
+  description:
+    "Book Hyderabadi-style biryani catering trays, non-veg appetizers, and curries for your next event in Redmond, WA. $500 minimum order, delivery available.",
+  alternates: { canonical: "/catering" },
+};
 
 export default function CateringPage() {
   return (

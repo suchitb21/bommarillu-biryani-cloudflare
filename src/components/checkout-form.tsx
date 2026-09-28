@@ -83,7 +83,7 @@ export function CheckoutForm({
   // the Square order, so Square charges exactly what this form shows.
   const salesTaxCents = computeSalesTaxCents(totalCents);
 
-  // Catering "delivery" carries a flat NON-TAXABLE $100 delivery fee - shown
+  // Catering "delivery" carries a flat NON-TAXABLE $70 delivery fee - shown
   // as its own row and kept OUT of the tax base, matching the order service
   // charge Square receives (`taxable: false`).
   const hasDeliveryFee = showEventDate && fulfillmentMethod === "delivery";

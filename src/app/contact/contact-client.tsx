@@ -1,0 +1,494 @@
+"use client";
+
+import { useEffect, useState, type FormEvent } from "react";
+import { getWeeklyHours } from "@/lib/time-slots";
+import "./contact.css";
+
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+/**
+ * Opening hours come straight from the booking timetable, so what is shown here
+ * can never disagree with the times a customer is actually allowed to pick.
+ * This used to be a hand-maintained copy and had drifted on five of seven days:
+ * it advertised a 3-4 PM break on days the kitchen stayed open, and closing
+ * times up to 45 minutes earlier than the timetable allowed.
+ */
+const WEEKLY_HOURS = getWeeklyHours();
+
+const EMPTY_CONTACT_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  message: "",
+  // Honeypot - hidden from people, filled by naive bots. See
+  // src/lib/validation/honeypot.ts.
+  company: "",
+};
+type ContactForm = typeof EMPTY_CONTACT_FORM;
+
+function getPacificNow() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const map: Record<string, string> = {};
+  parts.forEach((p) => {
+    map[p.type] = p.value;
+  });
+  let hour = parseInt(map.hour, 10);
+  if (hour === 24) hour = 0;
+  return {
+    dayIdx: WEEKDAY_NAMES.indexOf(map.weekday),
+    minutes: hour * 60 + parseInt(map.minute, 10),
+  };
+}
+
+export function ContactClient() {
+  const [status, setStatus] = useState<{ dayIdx: number; isOpen: boolean } | null>(null);
+
+  useEffect(() => {
+    const { dayIdx, minutes } = getPacificNow();
+    const isOpen = WEEKLY_HOURS[dayIdx].windows.some(
+      (window) => minutes >= window.start && minutes < window.end
+    );
+    setStatus({ dayIdx, isOpen });
+  }, []);
+
+  const [form, setForm] = useState<ContactForm>(EMPTY_CONTACT_FORM);
+  const [submitState, setSubmitState] = useState<
+    | { status: "idle" }
+    | { status: "submitting" }
+    | { status: "success" }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  function updateField(field: keyof ContactForm, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (submitState.status === "submitting") return;
+
+    setSubmitState({ status: "submitting" });
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        setSubmitState({
+          status: "error",
+          message: data?.error ?? "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      setForm(EMPTY_CONTACT_FORM);
+      setSubmitState({ status: "success" });
+    } catch {
+      setSubmitState({
+        status: "error",
+        message: "Network error — please check your connection and try again.",
+      });
+    }
+  }
+
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterCompany, setNewsletterCompany] = useState("");
+  const [newsletterState, setNewsletterState] = useState<
+    | { status: "idle" }
+    | { status: "submitting" }
+    | { status: "success"; message: string }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  async function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (newsletterState.status === "submitting") return;
+
+    setNewsletterState({ status: "submitting" });
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail, company: newsletterCompany }),
+      });
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.ok) {
+        setNewsletterState({
+          status: "error",
+          message: data?.error ?? "Something went wrong. Please try again.",
+        });
+        return;
+      }
+
+      setNewsletterEmail("");
+      // Signing up twice is not an error, so say so plainly instead of
+      // implying a fresh signup that did not happen.
+      setNewsletterState({
+        status: "success",
+        message: data.alreadySubscribed
+          ? "You're already on the list — thank you!"
+          : "Thanks for subscribing!",
+      });
+    } catch {
+      setNewsletterState({
+        status: "error",
+        message: "Network error — please check your connection and try again.",
+      });
+    }
+  }
+
+  const todayLabel = status ? WEEKLY_HOURS[status.dayIdx].label : null;
+  const badgeText = status ? (status.isOpen ? "Open Now" : "Closed Now") : "Checking hours…";
+  const badgeClass = status ? (status.isOpen ? "is-open" : "is-closed") : "";
+
+  return (
+    <>
+      <section className="contact-hero">
+        <div className="dot dot--orange" style={{ width: 8, height: 8, top: "20%", left: "8%" }} />
+        <div className="dot dot--ring" style={{ width: 16, height: 16, top: "65%", right: "10%" }} />
+        <div className="dot dot--orange" style={{ width: 6, height: 6, top: "30%", right: "16%" }} />
+
+        <div className="bs-heading">
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M4 18c6-8 12-8 18 0M22 18c4-5 8-5 10-2" stroke="#f0821e" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="30" cy="12" r="2" fill="#f0821e" />
+          </svg>
+          <h2>
+            Contact <span>Us</span>
+          </h2>
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M32 18c-6-8-12-8-18 0M14 18c-4-5-8-5-10-2" stroke="#f0821e" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="6" cy="12" r="2" fill="#f0821e" />
+          </svg>
+        </div>
+        <p className="bs-sub">
+          Have a question, feedback, or a group order in mind? Send us a message — we&rsquo;d love to hear from you.
+        </p>
+      </section>
+
+      <section className="contact-form-section">
+        <div className="contact-grid">
+          <form className="form-card" onSubmit={handleSubmit}>
+            {/* Honeypot: positioned off-screen rather than display:none, and
+                hidden from assistive tech. A person never sees or fills this;
+                a naive form-filling bot does. */}
+            <input
+              className="hp-field"
+              type="text"
+              name="company"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              value={form.company}
+              onChange={(e) => updateField("company", e.target.value)}
+            />
+            <div className="form-row">
+              <input
+                className="form-field"
+                type="email"
+                name="email"
+                placeholder="Email"
+                aria-label="Email"
+                autoComplete="email"
+                required
+                style={{ marginBottom: 0 }}
+                value={form.email}
+                onChange={(e) => updateField("email", e.target.value)}
+              />
+              <input
+                className="form-field"
+                type="tel"
+                name="phone"
+                placeholder="Phone"
+                aria-label="Phone"
+                autoComplete="tel"
+                style={{ marginBottom: 0 }}
+                value={form.phone}
+                onChange={(e) => updateField("phone", e.target.value)}
+              />
+            </div>
+            <input
+              className="form-field"
+              type="text"
+              name="name"
+              placeholder="Name"
+              aria-label="Name"
+              autoComplete="name"
+              required
+              value={form.name}
+              onChange={(e) => updateField("name", e.target.value)}
+            />
+            <textarea
+              className="form-field"
+              name="message"
+              placeholder="Message"
+              aria-label="Message"
+              required
+              value={form.message}
+              onChange={(e) => updateField("message", e.target.value)}
+            />
+            <button
+              type="submit"
+              className="btn-pill form-submit-btn"
+              disabled={submitState.status === "submitting"}
+            >
+              {submitState.status === "submitting" ? "Sending…" : "Submit"}
+            </button>
+
+            {submitState.status === "success" && (
+              <p className="form-feedback form-feedback--success" role="status">
+                Thanks for reaching out — we&rsquo;ve got your message and will
+                get back to you soon.
+              </p>
+            )}
+            {submitState.status === "error" && (
+              <p className="form-feedback form-feedback--error" role="alert">
+                {submitState.message}
+              </p>
+            )}
+          </form>
+
+          <div className="newsletter-card">
+            <svg className="newsletter-leaf" viewBox="0 0 170 170" fill="none">
+              <path
+                d="M170 0C150 20 120 30 100 55C85 74 78 100 90 125C110 110 130 90 145 65C158 44 168 22 170 0Z"
+                fill="#f0821e"
+              />
+              <path
+                d="M150 10C130 30 105 45 90 68C110 60 132 48 150 30C160 20 165 12 150 10Z"
+                fill="#f0821e"
+              />
+            </svg>
+            <h3>Our Newsletters</h3>
+            <p>
+              Be the first to know about new menu items, weekend specials, and
+              exclusive offers — straight to your inbox.
+            </p>
+            <form onSubmit={handleNewsletterSubmit}>
+              <input
+                className="hp-field"
+                type="text"
+                name="company"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                value={newsletterCompany}
+                onChange={(e) => setNewsletterCompany(e.target.value)}
+              />
+              <input
+                className="newsletter-field"
+                type="email"
+                name="email"
+                placeholder="Email"
+                aria-label="Email address for the newsletter"
+                autoComplete="email"
+                required
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="newsletter-submit-btn"
+                disabled={newsletterState.status === "submitting"}
+              >
+                {newsletterState.status === "submitting"
+                  ? "Subscribing…"
+                  : "Submit"}
+              </button>
+
+              {newsletterState.status === "success" && (
+                <p
+                  className="newsletter-feedback newsletter-feedback--success"
+                  role="status"
+                >
+                  {newsletterState.message}
+                </p>
+              )}
+              {newsletterState.status === "error" && (
+                <p
+                  className="newsletter-feedback newsletter-feedback--error"
+                  role="alert"
+                >
+                  {newsletterState.message}
+                </p>
+              )}
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section className="info-section">
+        <div className="dot dot--orange" style={{ width: 7, height: 7, top: "8%", left: "6%" }} />
+        <div className="dot dot--ring" style={{ width: 16, height: 16, top: "6%", right: "9%" }} />
+
+        <div className="bs-heading">
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M4 18c6-8 12-8 18 0M22 18c4-5 8-5 10-2" stroke="#f0821e" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="30" cy="12" r="2" fill="#f0821e" />
+          </svg>
+          <h2>
+            Get In <span>Touch</span>
+          </h2>
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M32 18c-6-8-12-8-18 0M14 18c-4-5-8-5-10-2" stroke="#f0821e" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="6" cy="12" r="2" fill="#f0821e" />
+          </svg>
+        </div>
+        <p className="bs-sub">Reach out directly, or stop by — here&rsquo;s everything you need to find us.</p>
+
+        <div className="info-grid">
+          <div className="info-card info-card--phone">
+            <div className="info-card-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8Z"
+                  stroke="#fff"
+                  strokeWidth="1.7"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <h3>+1 425-999-6271</h3>
+            <p>Call us for orders, catering, or any questions.</p>
+          </div>
+
+          <div className="info-card info-card--address">
+            <div className="info-card-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 22s7-7.2 7-12.5S16.4 2 12 2 5 4.9 5 9.5 12 22 12 22Z"
+                  stroke="#fff"
+                  strokeWidth="1.7"
+                  strokeLinejoin="round"
+                />
+                <circle cx="12" cy="9.5" r="2.5" stroke="#fff" strokeWidth="1.7" />
+              </svg>
+            </div>
+            <h3>17020 Avondale Way, Redmond, WA 98052</h3>
+            <p>Stop by for dine-in, pickup, or takeout.</p>
+          </div>
+
+          <div className="info-card info-card--hours">
+            <div className="info-card-icon">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="#fff" strokeWidth="1.7" />
+                <path d="M12 7v5l3.5 2" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span className={`hours-badge ${badgeClass}`}>{badgeText}</span>
+            <h3>Today&rsquo;s Hours</h3>
+            <p>{todayLabel ?? "Loading today's hours…"}</p>
+          </div>
+        </div>
+
+        <details className="hours-card">
+          <summary className="hours-summary">
+            <span className="hours-summary-left">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="#3b2417" strokeWidth="1.7" />
+                <path d="M12 7v5l3.5 2" stroke="#3b2417" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Hours of Operation
+            </span>
+            <span className="hours-summary-right">
+              <span className={`hours-badge ${badgeClass}`}>{badgeText}</span>
+              <span className="hours-summary-today">
+                {status ? `Today (${WEEKDAY_NAMES[status.dayIdx]}): ${todayLabel}` : "Loading today's hours…"}
+              </span>
+              <span className="hours-toggle-icon">+</span>
+            </span>
+          </summary>
+
+          <div className="hours-body">
+            {WEEKLY_HOURS.map((day, i) => (
+              <div className={`hours-row${status?.dayIdx === i ? " today" : ""}`} key={WEEKDAY_NAMES[i]}>
+                <span className="hours-day">
+                  {WEEKDAY_NAMES[i]} <span className="today-tag">Today</span>
+                </span>
+                <span className="hours-times">
+                  {day.ranges.map((range, rangeIndex) => (
+                    <span key={range}>
+                      {rangeIndex > 0 && <br />}
+                      {range}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
+      </section>
+
+      <section className="map-section">
+        <div className="dot dot--orange" style={{ width: 7, height: 7, top: "10%", left: "8%" }} />
+        <div className="dot dot--ring" style={{ width: 16, height: 16, top: "8%", right: "10%" }} />
+
+        <div className="bs-heading">
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M4 18c6-8 12-8 18 0M22 18c4-5 8-5 10-2" stroke="#f0821e" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="30" cy="12" r="2" fill="#f0821e" />
+          </svg>
+          <h2>
+            Find <span>Us</span>
+          </h2>
+          <svg viewBox="0 0 36 36" fill="none">
+            <path d="M32 18c-6-8-12-8-18 0M14 18c-4-5-8-5-10-2" stroke="#f0821e" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="6" cy="12" r="2" fill="#f0821e" />
+          </svg>
+        </div>
+        <p className="bs-sub">
+          Right on Avondale Way in Redmond — pan the map below or get turn-by-turn directions.
+        </p>
+
+        <div className="map-card">
+          <iframe
+            src="https://www.google.com/maps?q=17020+Avondale+Way,+Redmond,+WA+98052&output=embed"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Map to Bommarillu Biryani, 17020 Avondale Way, Redmond, WA 98052"
+          />
+        </div>
+
+        <div className="directions-wrap">
+          <a
+            className="btn-pill directions-btn"
+            href="https://www.google.com/maps/dir/?api=1&destination=17020+Avondale+Way,+Redmond,+WA+98052"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24" fill="none">
+              <path
+                d="M12 22s7-7.2 7-12.5S16.4 2 12 2 5 4.9 5 9.5 12 22 12 22Z"
+                stroke="#fff"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="9.5" r="2.5" stroke="#fff" strokeWidth="1.8" />
+            </svg>
+            Get Directions
+          </a>
+        </div>
+      </section>
+    </>
+  );
+}

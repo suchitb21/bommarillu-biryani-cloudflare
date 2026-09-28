@@ -1,8 +1,9 @@
 import "../legal.css";
 
 export const metadata = {
-  title: "Privacy Policy | Bommarillu Biryani",
+  title: "Privacy Policy",
   description: "How Bommarillu Biryani handles your information when you order online.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
@@ -11,7 +12,7 @@ export default function PrivacyPage() {
       <div className="legal-page-header">
         <span className="legal-kicker">Your privacy</span>
         <h1>Privacy Policy</h1>
-        <p>Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052 &middot; +1 425-420-0160</p>
+        <p>Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052 &middot; +1 425-999-6271</p>
       </div>
       <p className="legal-updated">Last updated: 2026</p>
 
@@ -95,7 +96,7 @@ export default function PrivacyPage() {
         You may ask us what information we hold about you, ask us to correct or delete it,
         or ask us to stop using it. Because we keep very little data ourselves (most
         order records live with Square), we will usually point you to Square for payment
-        records. To make a request, call us at +1 425-420-0160 and we will help.
+        records. To make a request, call us at +1 425-999-6271 and we will help.
       </p>
 
       <h2>8. Security</h2>
@@ -114,7 +115,7 @@ export default function PrivacyPage() {
       <h2>10. Contact</h2>
       <p className="legal-contact">
         Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052, United States
-        &middot; +1 425-420-0160
+        &middot; +1 425-999-6271
       </p>
     </section>
   );

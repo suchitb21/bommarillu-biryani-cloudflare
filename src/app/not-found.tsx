@@ -35,7 +35,7 @@ export default function NotFound() {
         </div>
         <p className="system-page-help">
           Need a hand? Call us on{" "}
-          <a href="tel:+14259996271">+1 425-999-6271</a>.
+          <a href="tel:4254200160">425-420-0160</a>.
         </p>
       </div>
     </section>

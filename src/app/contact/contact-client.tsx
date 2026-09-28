@@ -368,7 +368,7 @@ export function ContactClient() {
                 />
               </svg>
             </div>
-            <h3>+1 425-999-6271</h3>
+            <h3>425-420-0160</h3>
             <p>Call us for orders, catering, or any questions.</p>
           </div>
 

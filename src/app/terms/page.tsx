@@ -12,7 +12,7 @@ export default function TermsPage() {
       <div className="legal-page-header">
         <span className="legal-kicker">Good to know</span>
         <h1>Terms &amp; Conditions</h1>
-        <p>Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052 &middot; +1 425-999-6271</p>
+        <p>Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052 &middot; 425-420-0160</p>
       </div>
       <p className="legal-updated">Last updated: 2026</p>
 
@@ -80,7 +80,7 @@ export default function TermsPage() {
         limited to) nuts, dairy, eggs, gluten, soy, and seafood. Cross-contact may occur,
         and we cannot guarantee any dish is free of a given allergen. If you or someone
         you are ordering for has an allergy or dietary restriction, <strong>you must tell
-        the restaurant directly</strong> by phone at +1 425-999-6271 before or when you
+        the restaurant directly</strong> by phone at 425-420-0160 before or when you
         place your order. Instructions entered online are helpful but are not a
         substitute for speaking to us, and we are not liable for reactions arising from
         allergens not disclosed to us directly.
@@ -91,7 +91,7 @@ export default function TermsPage() {
         Many of our chicken and mutton dishes are prepared bone-in by default, even when a
         boneless version is also on the menu. If you require a specific item to be
         strictly boneless, <strong>you must contact the restaurant directly</strong> by
-        phone at +1 425-999-6271 before or when you place your order to confirm it. Even
+        phone at 425-420-0160 before or when you place your order to confirm it. Even
         in dishes labeled or requested as boneless, chicken and other meat items may still
         contain small or minuscule bone fragments as a natural result of butchering and
         preparation. Please eat carefully and supervise children when serving these
@@ -136,7 +136,7 @@ export default function TermsPage() {
       <h2>7. Cancellations, changes and refunds</h2>
       <ul>
         <li>
-          To change or cancel an order, call us at +1 425-999-6271 as soon as possible.
+          To change or cancel an order, call us at 425-420-0160 as soon as possible.
           Once food is being prepared or delivered, changes and cancellations may not be
           possible.
         </li>
@@ -171,7 +171,7 @@ export default function TermsPage() {
       <h2>10. Contact</h2>
       <p className="legal-contact">
         Bommarillu Biryani &middot; 17020 Avondale Way, Redmond, WA 98052, United States
-        &middot; +1 425-999-6271
+        &middot; 425-420-0160
       </p>
     </section>
   );

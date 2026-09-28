@@ -50,7 +50,7 @@ export default function Error({
           </Link>
         </div>
         <p className="system-page-help">
-          Call us on <a href="tel:+14259996271">+1 425-999-6271</a>.
+          Call us on <a href="tel:4254200160">425-420-0160</a>.
         </p>
       </div>
     </section>

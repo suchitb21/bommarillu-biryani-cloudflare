@@ -88,11 +88,19 @@ website** — never Square POS, DoorDash, Uber Eats, Grubhub, or Square Online.
 Two independent markers are used, and they answer different questions:
 
 **1. `order.source.name` — is this order ours?**
-Square sets this to the **application name** on orders an app creates. Ours is
-`Biryani Catering`. Every other channel reports its own distinct value
-(`Point of Sale`, `DoorDash`, `UberEats`, `Grubhub`, `Square Online`), so the
-dashboard passes it to Square as a `source_filter` allowlist and those orders
-never leave Square's servers.
+Square sets this to the **application name** on orders an app creates. This
+app has been renamed once in the Square Developer Portal, so two names are
+both "ours": the original `Biryani Catering` and the current
+`BOMMARILLU BIRYANI  425-420-0160` (note the double space before the phone
+number — that's the real string Square sends, verified with
+`scripts/verify-square-sources.sh`, not a typo). Every other channel reports
+its own distinct value (`Point of Sale`, `DoorDash`, `UberEats`, `Grubhub`,
+`Square Online`), so the dashboard passes both of ours to Square as a
+`source_filter` allowlist (`SQUARE_PORTAL_SOURCE_NAME`, comma-separated — see
+`src/lib/square/config.ts`) and those other-channel orders never leave
+Square's servers. If the app is ever renamed again, **add** the new name to
+that list rather than replacing the old one — orders already placed under a
+past name are real and would otherwise silently disappear from the dashboard.
 
 This is a performance fix, not just tidiness. Filtering in our own code after
 fetching meant downloading the entire location's order history:

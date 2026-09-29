@@ -26,26 +26,43 @@ export const SQUARE_MENU_CACHE_TAG = "square-menu";
 export const SQUARE_MENU_REVALIDATE_SECONDS = 3600;
 
 /**
- * The Square Application name our own checkout orders carry as
+ * The Square Application name(s) our own checkout orders carry as
  * `order.source.name`.
  *
  * VERIFIED AGAINST PRODUCTION (location LB0KX3K7ZE1WF): of 17,369 orders in a
- * 90-day window, exactly 5 carried this source name, and those 5 were
- * precisely the orders our checkout created. Every other channel reports its
- * own distinct name - "Point of Sale", "DoorDash", "UberEats", "Grubhub",
- * "Square Online" - so this value cleanly separates our orders server-side.
+ * 90-day window, exactly 5 carried the source name "Biryani Catering", and
+ * those 5 were precisely the orders our checkout created. Every other channel
+ * reports its own distinct name - "Point of Sale", "DoorDash", "UberEats",
+ * "Grubhub", "Square Online" - so this value cleanly separates our orders
+ * server-side.
  *
- * Both our flows share it, because catering and online ordering go through the
- * same Square application. Catering vs. menu is NOT distinguishable from it;
- * that is what `metadata.channel` is for.
+ * The app was later renamed in the Square Developer Portal to
+ * "BOMMARILLU BIRYANI  425-420-0160" (verified against production: note the
+ * double space between "BIRYANI" and "425" - that is the real string Square
+ * sends, not a typo to "fix"). Both names are kept here because real paid
+ * orders exist under the old name and the allowlist is exact-match: dropping
+ * it would make those orders silently disappear from the dashboard.
  *
- * Overridable because this is the Square *application* name: renaming the app
- * in the Square Developer Portal would change the string.
+ * Both our flows share this, because catering and online ordering go through
+ * the same Square application. Catering vs. menu is NOT distinguishable from
+ * it; that is what `metadata.channel` is for.
+ *
+ * Overridable (comma-separated) because this is the Square *application*
+ * name: renaming the app again in the Square Developer Portal would change
+ * the string, and the old name(s) should stay in this list rather than being
+ * replaced, for the same reason.
  */
-const PORTAL_SOURCE_NAME_DEFAULT = "Biryani Catering";
+const PORTAL_SOURCE_NAME_DEFAULTS = [
+  "Biryani Catering",
+  "BOMMARILLU BIRYANI  425-420-0160",
+];
 
-export function getPortalSourceName(): string {
-  return (
-    process.env.SQUARE_PORTAL_SOURCE_NAME?.trim() || PORTAL_SOURCE_NAME_DEFAULT
-  );
+export function getPortalSourceNames(): string[] {
+  const override = process.env.SQUARE_PORTAL_SOURCE_NAME?.trim();
+  if (!override) return PORTAL_SOURCE_NAME_DEFAULTS;
+
+  return override
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
 }

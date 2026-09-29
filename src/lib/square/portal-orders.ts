@@ -1,7 +1,7 @@
 import "server-only";
 import type { Square } from "square";
 import { getSquareClient, getSquareLocationId } from "@/lib/square/client";
-import { getPortalSourceName } from "@/lib/square/config";
+import { getPortalSourceNames } from "@/lib/square/config";
 import { getOrderLookbackDays } from "@/lib/admin/config";
 import type {
   AdminOrderItemView,
@@ -14,7 +14,7 @@ import type {
  * Reads the orders this website created out of Square.
  *
  * Square is the system of record, so there is no local orders table. The read
- * is narrowed server-side by a source-name allowlist (see getPortalSourceName),
+ * is narrowed server-side by a source-name allowlist (see getPortalSourceNames),
  * which is what keeps this cheap: filtering afterwards in our own code meant
  * downloading every order at the location first.
  *
@@ -184,7 +184,7 @@ async function scanSquareOrders(): Promise<RawPortalOrderResult> {
         // 90-day window - of which only a handful are ours. Square ANDs this
         // with the date filter, so POS, DoorDash, UberEats, Grubhub and Square
         // Online orders never leave Square's servers.
-        sourceFilter: { sourceNames: [getPortalSourceName()] },
+        sourceFilter: { sourceNames: getPortalSourceNames() },
       },
       sort: { sortField: "CREATED_AT", sortOrder: "DESC" },
     },

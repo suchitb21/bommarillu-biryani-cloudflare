@@ -1,6 +1,6 @@
 import { Fragment } from "react";
-import Link from "next/link";
 import { getWeeklyHours } from "@/lib/time-slots";
+import { HoverPrefetchLink as Link } from "@/components/hover-prefetch-link";
 import "./footer.css";
 
 /** Short day labels, indexed by JS weekday (0 = Sunday). */

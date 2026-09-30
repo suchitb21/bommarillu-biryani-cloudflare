@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "./navbar.css";
 import { useOrderOnlineCart } from "@/lib/cart/cart-context";
+import { HoverPrefetchLink } from "@/components/hover-prefetch-link";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -15,9 +15,9 @@ export function Navbar() {
 
   return (
     <header className={isHome ? "navbar navbar--dark" : "navbar"}>
-      <Link href="/" className="logo">
+      <HoverPrefetchLink href="/" className="logo">
         <img src="/logo.jpeg" alt="Bommarillu Indian Cuisine" className="logo-badge" />
-      </Link>
+      </HoverPrefetchLink>
 
       <div className="navbar-right">
         <nav
@@ -25,19 +25,19 @@ export function Navbar() {
           id="navLinks"
           onClick={() => setOpen(false)}
         >
-          <Link href="/">Home</Link>
-          <Link href="/catering">Catering</Link>
-          <Link href="/about-us">About Us</Link>
-          <Link href="/contact">Contact</Link>
-          <Link href="/order-online" className="btn-pill">
+          <HoverPrefetchLink href="/">Home</HoverPrefetchLink>
+          <HoverPrefetchLink href="/catering">Catering</HoverPrefetchLink>
+          <HoverPrefetchLink href="/about-us">About Us</HoverPrefetchLink>
+          <HoverPrefetchLink href="/contact">Contact</HoverPrefetchLink>
+          <HoverPrefetchLink href="/order-online" className="btn-pill">
             Order Online
-          </Link>
+          </HoverPrefetchLink>
         </nav>
 
-        <Link href="/cart" className="cart-link" aria-label={`Cart, ${cart.totalCount} items`}>
+        <HoverPrefetchLink href="/cart" className="cart-link" aria-label={`Cart, ${cart.totalCount} items`}>
           <CartIcon />
           {cart.totalCount > 0 ? <span className="cart-badge">{cart.totalCount}</span> : null}
-        </Link>
+        </HoverPrefetchLink>
 
         <button
           className="hamburger"

@@ -45,6 +45,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // The old Square-hosted site used /home; this one serves the home page
+      // at /. A 301 here tells Google to transfer that old listing's SEO
+      // value to / instead of leaving it pointing at a dead page.
+      { source: "/home", destination: "/", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

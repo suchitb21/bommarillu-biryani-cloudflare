@@ -7,7 +7,7 @@ import "./catering.css";
 export const metadata: Metadata = {
   title: "Catering",
   description:
-    "Book Hyderabadi-style biryani catering trays, non-veg appetizers, and curries for your next event in Redmond, WA. Delivery available.",
+    "Book Hyderabadi-style biryani catering trays, non-veg appetizers, and curries for your next event in Redmond, WA — no minimum order, delivery available.",
   alternates: { canonical: "/catering" },
 };
 

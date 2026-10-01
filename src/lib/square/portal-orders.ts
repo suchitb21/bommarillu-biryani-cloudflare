@@ -62,6 +62,17 @@ type RawPortalOrder = {
   customerName: string;
   customerPhone: string;
   note: string | null;
+  /** Catering delivery only - parsed out of the note (see
+   * extractNoteSegment). Null for pickup orders. */
+  deliveryAddress: string | null;
+  /** Catering delivery only - the chosen distance band's label, read
+   * directly from order.metadata (see build-order.ts). Null for pickup
+   * orders, and for delivery orders placed before this was captured. */
+  deliveryDistanceLabel: string | null;
+  /** Catering only - parsed out of the note. "—" when the customer left it
+   * blank, matching this file's existing "no value" convention (see
+   * customerName/customerPhone above). */
+  specialInstructions: string;
   items: AdminOrderItemView[];
 };
 
@@ -89,6 +100,20 @@ function formatMoney(cents: number): string {
 function toCents(money: Square.Money | undefined): number {
   // Square returns money as bigint cents.
   return Number(money?.amount ?? 0);
+}
+
+/**
+ * Pulls one " | "-delimited segment out of the fulfillment note written by
+ * buildFulfillment (see src/lib/checkout/build-order.ts), by the fixed
+ * prefix that writer uses - e.g. "Special instructions: ". Both sides of
+ * this are ours, so the prefixes are a contract between the two files, not a
+ * guess. Returns null when that segment isn't present (pickup orders have no
+ * delivery segment; most orders have no special instructions).
+ */
+function extractNoteSegment(note: string | null, prefix: string): string | null {
+  if (!note) return null;
+  const segment = note.split(" | ").find((part) => part.startsWith(prefix));
+  return segment ? segment.slice(prefix.length).trim() || null : null;
 }
 
 /**
@@ -157,6 +182,9 @@ function toRawPortalOrder(
     customerName: recipient?.displayName?.trim() || "—",
     customerPhone: recipient?.phoneNumber?.trim() || "—",
     note,
+    deliveryAddress: extractNoteSegment(note, "CATERING DELIVERY (restaurant-arranged) to: "),
+    deliveryDistanceLabel: order.metadata?.cateringDeliveryDistance?.trim() || null,
+    specialInstructions: extractNoteSegment(note, "Special instructions: ") || "—",
     items: (order.lineItems ?? []).map((lineItem) => ({
       name: lineItem.name?.trim() || "Item",
       quantity: Number.parseInt(lineItem.quantity ?? "0", 10) || 0,
@@ -269,6 +297,9 @@ function toView(order: RawPortalOrder): AdminOrderView {
     tipLabel: order.tipCents > 0 ? formatMoney(order.tipCents) : null,
     items: order.items,
     note: order.note,
+    deliveryAddress: order.deliveryAddress,
+    deliveryDistanceLabel: order.deliveryDistanceLabel,
+    specialInstructions: order.specialInstructions,
   };
 }
 

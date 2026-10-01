@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createCheckout } from "@/lib/checkout/build-order";
-import { isTimeWithinOpenHours, isWeekendDate, zonedDateTimeToUtc } from "@/lib/time-slots";
+import {
+  cateringDeliveryTimeCutoff,
+  isCateringDeliveryAvailableForDate,
+  isTimeWithinOpenHours,
+  isWeekendDate,
+  zonedDateTimeToUtc,
+} from "@/lib/time-slots";
 import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
 import { getCateringDeliveryTier } from "@/lib/checkout/delivery-fee";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
@@ -38,6 +44,32 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   if (body.fulfillmentMethod === "delivery" && !deliveryTier) {
     return NextResponse.json(
       { ok: false, error: "Please select how far you are from the restaurant." },
+      { status: 400 }
+    );
+  }
+
+  // Defense in depth: catering delivery has its own day/time limit - staff
+  // can only arrange it Monday-Friday, and Friday only up to a cutoff, never
+  // Saturday or Sunday - judged against the event date, not when the order
+  // is placed. Don't trust the client's date-gating or slot-filtering alone.
+  if (body.fulfillmentMethod === "delivery" && !isCateringDeliveryAvailableForDate(body.eventDate)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Delivery isn't available for a Saturday or Sunday event date - please choose Pickup, or a Monday-Friday event date for delivery.",
+      },
+      { status: 400 }
+    );
+  }
+  const fridayDeliveryCutoff =
+    body.fulfillmentMethod === "delivery" ? cateringDeliveryTimeCutoff(body.eventDate) : null;
+  if (fridayDeliveryCutoff && body.timeSlot > fridayDeliveryCutoff.time) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `Friday catering deliveries are only available until ${fridayDeliveryCutoff.label} Pacific - please choose an earlier time, or Pickup.`,
+      },
       { status: 400 }
     );
   }
@@ -83,6 +115,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       timeStr: body.timeSlot,
       specialInstructions: body.specialInstructions,
       deliveryFeeCents: deliveryTier?.feeCents,
+      deliveryDistanceLabel: deliveryTier?.label,
       // Catering "delivery" stays a PICKUP fulfillment with the address on
       // the recipient and in the note - Square's courier dispatch is not
       // available for API-created orders (see src/lib/delivery.ts), and

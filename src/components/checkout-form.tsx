@@ -4,11 +4,14 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import "./checkout-form.css";
 import {
+  cateringDeliveryTimeCutoff,
   earliestDateForLeadTime,
   getAvailableSlots,
+  isCateringDeliveryAvailableForDate,
   isWeekendDate,
   orderingAvailability,
   todayInRestaurantTimeZone,
+  CATERING_DELIVERY_FRIDAY_CUTOFF_LABEL,
 } from "@/lib/time-slots";
 import type { CheckoutAddress, FulfillmentMethod } from "@/lib/checkout/types";
 import { computeSalesTaxCents, SALES_TAX_NAME, SALES_TAX_PERCENT } from "@/lib/checkout/tax";
@@ -95,20 +98,40 @@ export function CheckoutForm({
   // the Square order, so Square charges exactly what this form shows.
   const salesTaxCents = computeSalesTaxCents(totalCents);
 
+  const dateForSlots = showEventDate ? eventDate : todayInRestaurantTimeZone();
+
+  // Catering delivery has its own day/time limit on top of the restaurant's
+  // open hours - Monday-Friday, Friday only until a cutoff, judged against
+  // the event date (not when the order is placed). Falls back to pickup
+  // without discarding the customer's raw delivery preference - the same
+  // derived-not-synced-via-effect pattern selectedTimeSlot uses below, so
+  // picking a valid date again naturally re-activates delivery.
+  const cateringDeliveryAllowedForDate = showEventDate
+    ? isCateringDeliveryAvailableForDate(dateForSlots)
+    : true;
+  const fridayDeliveryCutoff = showEventDate ? cateringDeliveryTimeCutoff(dateForSlots) : null;
+  const effectiveFulfillmentMethod: FulfillmentMethod =
+    fulfillmentMethod === "delivery" && !cateringDeliveryAllowedForDate ? "pickup" : fulfillmentMethod;
+
   // Catering "delivery" carries a NON-TAXABLE delivery fee, banded by the
   // customer's self-selected distance - shown as its own row and kept OUT
   // of the tax base, matching the order service charge Square receives
   // (`taxable: false`).
   const selectedDeliveryTier = getCateringDeliveryTier(deliveryDistanceTierId);
-  const hasDeliveryFee = showEventDate && fulfillmentMethod === "delivery" && Boolean(selectedDeliveryTier);
+  const hasDeliveryFee =
+    showEventDate && effectiveFulfillmentMethod === "delivery" && Boolean(selectedDeliveryTier);
   const deliveryFeeCents = selectedDeliveryTier?.feeCents ?? 0;
   const grandTotalCents = totalCents + salesTaxCents + deliveryFeeCents;
 
-  const dateForSlots = showEventDate ? eventDate : todayInRestaurantTimeZone();
-  const slots = useMemo(
-    () => getAvailableSlots(dateForSlots, minLeadMinutes),
-    [dateForSlots, minLeadMinutes]
-  );
+  const slots = useMemo(() => {
+    const available = getAvailableSlots(dateForSlots, minLeadMinutes);
+    // On a Friday catering delivery, only offer times at or before the
+    // cutoff - the customer can't even select an invalid delivery time.
+    if (effectiveFulfillmentMethod === "delivery" && fridayDeliveryCutoff) {
+      return available.filter((slot) => slot.value <= fridayDeliveryCutoff.time);
+    }
+    return available;
+  }, [dateForSlots, minLeadMinutes, effectiveFulfillmentMethod, fridayDeliveryCutoff?.time]);
 
   // Derived rather than synced via an effect: if the date changed and the
   // previously-picked slot is no longer in range, fall back to the first
@@ -156,11 +179,11 @@ export function CheckoutForm({
       );
     }
     if (!selectedTimeSlot) return setError("Please choose a time.");
-    if (fulfillmentMethod === "delivery" && !selectedDeliveryTier) {
+    if (effectiveFulfillmentMethod === "delivery" && !selectedDeliveryTier) {
       return setError("Please select how far you are from the restaurant.");
     }
     if (
-      fulfillmentMethod === "delivery" &&
+      effectiveFulfillmentMethod === "delivery" &&
       (!addressLine1.trim() || !city.trim() || !state.trim() || !postalCode.trim())
     ) {
       return setError("Please complete the delivery address.");
@@ -174,9 +197,9 @@ export function CheckoutForm({
       await onSubmit({
         name: name.trim(),
         phone: phone.trim(),
-        fulfillmentMethod,
+        fulfillmentMethod: effectiveFulfillmentMethod,
         address:
-          fulfillmentMethod === "delivery"
+          effectiveFulfillmentMethod === "delivery"
             ? {
                 addressLine1: addressLine1.trim(),
                 addressLine2: addressLine2.trim() || undefined,
@@ -185,7 +208,7 @@ export function CheckoutForm({
                 postalCode: postalCode.trim(),
               }
             : undefined,
-        deliveryDistanceTierId: fulfillmentMethod === "delivery" ? deliveryDistanceTierId : undefined,
+        deliveryDistanceTierId: effectiveFulfillmentMethod === "delivery" ? deliveryDistanceTierId : undefined,
         eventDate: showEventDate ? eventDate : undefined,
         timeSlot: selectedTimeSlot,
         specialInstructions: showEventDate ? specialInstructions.trim() || undefined : undefined,
@@ -229,7 +252,9 @@ export function CheckoutForm({
           <button
             type="button"
             className={
-              fulfillmentMethod === "pickup" ? "checkout-method-btn checkout-method-btn--active" : "checkout-method-btn"
+              effectiveFulfillmentMethod === "pickup"
+                ? "checkout-method-btn checkout-method-btn--active"
+                : "checkout-method-btn"
             }
             onClick={() => setFulfillmentMethod("pickup")}
           >
@@ -258,11 +283,15 @@ export function CheckoutForm({
             <button
               type="button"
               className={
-                fulfillmentMethod === "delivery"
-                  ? "checkout-method-btn checkout-method-btn--active"
-                  : "checkout-method-btn"
+                !cateringDeliveryAllowedForDate
+                  ? "checkout-method-btn checkout-method-btn--disabled"
+                  : effectiveFulfillmentMethod === "delivery"
+                    ? "checkout-method-btn checkout-method-btn--active"
+                    : "checkout-method-btn"
               }
               onClick={() => setFulfillmentMethod("delivery")}
+              disabled={!cateringDeliveryAllowedForDate}
+              aria-disabled={!cateringDeliveryAllowedForDate}
             >
               Delivery
             </button>
@@ -277,12 +306,28 @@ export function CheckoutForm({
           <p className="checkout-help">
             Delivery is temporarily unavailable &mdash; please choose pickup, or check back soon.
           </p>
-        ) : fulfillmentMethod === "delivery" && deliveryHelpText ? (
-          <p className="checkout-help">{deliveryHelpText}</p>
+        ) : !cateringDeliveryAllowedForDate ? (
+          <p className="checkout-help">
+            Delivery isn&rsquo;t available for a Saturday or Sunday event date &mdash; catering
+            delivery runs Monday&ndash;Friday, with Friday deliveries only until{" "}
+            {CATERING_DELIVERY_FRIDAY_CUTOFF_LABEL} Pacific. Choose Pickup, or pick a weekday
+            event date for delivery.
+          </p>
+        ) : effectiveFulfillmentMethod === "delivery" && deliveryHelpText ? (
+          <p className="checkout-help">
+            {deliveryHelpText}
+            {fridayDeliveryCutoff ? (
+              <>
+                {" "}
+                Friday catering deliveries are only available until {fridayDeliveryCutoff.label} Pacific
+                &mdash; later times aren&rsquo;t shown below.
+              </>
+            ) : null}
+          </p>
         ) : null}
       </div>
 
-      {fulfillmentMethod === "delivery" ? (
+      {effectiveFulfillmentMethod === "delivery" ? (
         <>
           <div className="checkout-field">
             <label htmlFor="checkout-delivery-distance">How far are you from the restaurant?</label>
@@ -492,7 +537,7 @@ export function CheckoutForm({
               !agreedToTerms ||
               submitting ||
               slots.length === 0 ||
-              (fulfillmentMethod === "delivery" && !selectedDeliveryTier)
+              (effectiveFulfillmentMethod === "delivery" && !selectedDeliveryTier)
             }
           >
             <span>{submitting ? "Redirecting to payment..." : submitLabel}</span>

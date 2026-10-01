@@ -65,6 +65,45 @@ export function isWeekendDate(dateStr: string): boolean {
   return weekday === 0 || weekday === 5 || weekday === 6;
 }
 
+/**
+ * Catering delivery's own day/time limit - separate from the restaurant's
+ * open hours above, and separate from the Fri-Sun "weekend item" rule: staff
+ * can only arrange a courier/delivery run Monday-Friday, and on Friday only
+ * up to this cutoff. Never Saturday or Sunday, regardless of what hours the
+ * restaurant is open that day. Judged against the event date, not the date
+ * the order is placed.
+ */
+const CATERING_DELIVERY_FRIDAY_CUTOFF_MINUTES = 16 * 60; // 4:00 PM
+
+/** Display label for the Friday catering delivery cutoff, e.g. "4:00 PM" -
+ * for messaging on days other than Friday itself, where
+ * `cateringDeliveryTimeCutoff` below already returns null. */
+export const CATERING_DELIVERY_FRIDAY_CUTOFF_LABEL = formatTimeLabel(
+  CATERING_DELIVERY_FRIDAY_CUTOFF_MINUTES
+);
+
+/** True when catering delivery can be offered at all for this "YYYY-MM-DD"
+ * event date (Pacific calendar day): Monday-Friday. Friday is further
+ * limited by time - see `cateringDeliveryTimeCutoff`. */
+export function isCateringDeliveryAvailableForDate(dateStr: string): boolean {
+  const weekday = weekdayOfDate(dateStr);
+  return weekday >= 1 && weekday <= 5;
+}
+
+/** Friday's catering delivery cutoff for this event date, as a "HH:mm"
+ * (24-hour, zero-padded - safe to compare lexicographically against a
+ * TimeSlot's `value`) plus a display label, or null on every other day
+ * (no time restriction beyond `isCateringDeliveryAvailableForDate`). */
+export function cateringDeliveryTimeCutoff(
+  dateStr: string
+): { time: string; label: string } | null {
+  if (weekdayOfDate(dateStr) !== 5) return null;
+  return {
+    time: toHHmm(CATERING_DELIVERY_FRIDAY_CUTOFF_MINUTES),
+    label: CATERING_DELIVERY_FRIDAY_CUTOFF_LABEL,
+  };
+}
+
 /** The open windows for a calendar date, or [] when the restaurant is closed. */
 function getOpenWindowsForDate(dateStr: string): MinutesWindow[] {
   return WEEKLY_OPEN_WINDOWS[weekdayOfDate(dateStr)] ?? [];

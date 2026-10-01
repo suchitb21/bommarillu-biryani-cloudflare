@@ -32,6 +32,14 @@ export type AdminOrderView = {
   tipLabel: string | null;
   items: AdminOrderItemView[];
   note: string | null;
+  /** Catering delivery only - null for pickup orders. */
+  deliveryAddress: string | null;
+  /** Catering delivery only - null for pickup orders, and for delivery
+   * orders placed before this was captured. */
+  deliveryDistanceLabel: string | null;
+  /** Catering only - "—" when the customer left it blank, matching this
+   * file's existing "no value" convention (see customerName/customerPhone). */
+  specialInstructions: string;
 };
 
 export type PortalOrderSummary = {

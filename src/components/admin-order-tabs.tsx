@@ -117,6 +117,23 @@ function OrderCard({ order }: { order: AdminOrderView }) {
         </ul>
       )}
 
+      {isDelivery && (
+        <div className="admin-order-delivery">
+          <p className="admin-order-meta">
+            Distance: {order.deliveryDistanceLabel ?? "—"}
+          </p>
+          <p className="admin-order-meta">
+            Deliver to: {order.deliveryAddress ?? "—"}
+          </p>
+        </div>
+      )}
+
+      {order.channel === "catering" && (
+        <p className="admin-order-meta">
+          Special instructions: {order.specialInstructions}
+        </p>
+      )}
+
       {order.note && <p className="admin-order-note">{order.note}</p>}
     </article>
   );

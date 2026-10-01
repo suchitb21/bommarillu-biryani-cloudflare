@@ -123,6 +123,11 @@ export type CreateCheckoutArgs = {
    * from the customer's chosen distance band (see delivery-fee.ts). Omitted
    * (or a pickup order) means no delivery service charge is added. */
   deliveryFeeCents?: number;
+  /** Catering "delivery" only - the chosen distance band's display label
+   * (e.g. "6 to 10 miles"), written to `order.metadata` so the admin
+   * dashboard can show it. Metadata (not the note) because it's small,
+   * structured, and read back directly rather than parsed out of prose. */
+  deliveryDistanceLabel?: string;
   /** Structured channel tag, written to `order.metadata.channel`. The prose
    * `noteContext` above is only ever used for the fulfillment note. */
   channel: CheckoutChannel;
@@ -175,7 +180,12 @@ export async function createCheckout(args: CreateCheckoutArgs): Promise<{ url: s
   const order: Square.Order = {
     locationId,
     referenceId,
-    metadata: { channel: args.channel },
+    metadata: {
+      channel: args.channel,
+      ...(isDelivery && args.deliveryDistanceLabel
+        ? { cateringDeliveryDistance: args.deliveryDistanceLabel }
+        : {}),
+    },
     lineItems: buildLineItems(args.lines),
     fulfillments: [fulfillment],
     taxes: [

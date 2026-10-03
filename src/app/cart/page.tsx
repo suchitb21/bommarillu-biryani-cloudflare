@@ -5,8 +5,8 @@ import Image from "next/image";
 import "./cart.css";
 import { useOrderOnlineCart } from "@/lib/cart/cart-context";
 import {
-  cartRequiresWeekdayOrderDate,
-  cartRequiresWeekendEventDate,
+  weekdayOnlyItemNames,
+  weekendOnlyItemNames,
   lineTotalCents,
   type CartLine,
 } from "@/lib/cart/types";
@@ -75,8 +75,8 @@ export default function CartPage() {
 
             <CheckoutForm
               showEventDate={false}
-              requiresWeekendEventDate={cartRequiresWeekendEventDate(cart.lines)}
-              requiresWeekdayOrderDate={cartRequiresWeekdayOrderDate(cart.lines)}
+              weekendOnlyItemNames={weekendOnlyItemNames(cart.lines)}
+              weekdayOnlyItemNames={weekdayOnlyItemNames(cart.lines)}
               minLeadMinutes={20}
               externalDeliveryHref={DELIVERY_ORDERING_URL}
               submitLabel="Pay now"

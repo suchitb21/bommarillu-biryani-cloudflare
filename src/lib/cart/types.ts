@@ -59,16 +59,29 @@ export function lineTotalCents(line: CartLine): number {
   return (line.unitPriceCents + modifiersCents) * line.quantity;
 }
 
-/** True when any line in the cart is weekend-only, meaning the order date
- * (Catering's chosen event date, or Order Online's today) must fall on a
- * Friday, Saturday, or Sunday. Used both client-side (checkout form) and
- * server-side (checkout API routes) so the two can't disagree. */
-export function cartRequiresWeekendEventDate(lines: CartLine[]): boolean {
-  return lines.some((line) => line.isWeekendOnly);
+/** Distinct names of the cart's weekend-only items, for naming them to the
+ * customer when a date blocks checkout. */
+export function weekendOnlyItemNames(lines: CartLine[]): string[] {
+  return uniqueNames(lines.filter((line) => line.isWeekendOnly));
 }
 
-/** True when any line is not available Friday-Sunday - Order Online's
- * checkout must fall on a Monday-Thursday. */
-export function cartRequiresWeekdayOrderDate(lines: CartLine[]): boolean {
-  return lines.some((line) => line.isWeekdayOnly);
+/** Distinct names of the cart's Monday-Thursday-only items. */
+export function weekdayOnlyItemNames(lines: CartLine[]): string[] {
+  return uniqueNames(lines.filter((line) => line.isWeekdayOnly));
+}
+
+function uniqueNames(lines: CartLine[]): string[] {
+  return [...new Set(lines.map((line) => line.itemName))];
+}
+
+/** "Veggie Noodles", "A and B", "A, B and C" - for naming items in a sentence. */
+export function joinItemNames(names: string[]): string {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/** e.g. "Veggie Noodles is only available Monday–Thursday." */
+export function unavailableItemsSentence(names: string[], days: string): string {
+  const verb = names.length > 1 ? "are" : "is";
+  return `${joinItemNames(names)} ${verb} only available ${days}.`;
 }

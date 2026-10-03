@@ -7,7 +7,11 @@ import {
   todayInRestaurantTimeZone,
   zonedDateTimeToUtc,
 } from "@/lib/time-slots";
-import { cartRequiresWeekdayOrderDate, cartRequiresWeekendEventDate } from "@/lib/cart/types";
+import {
+  unavailableItemsSentence,
+  weekdayOnlyItemNames,
+  weekendOnlyItemNames,
+} from "@/lib/cart/types";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the /cart checkout form uses to build its slot list.
@@ -56,21 +60,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   // Defense in depth: don't trust the client's weekend-only gating alone.
   // Order Online has no date picker (always "today"), so this can't be
   // fixed by choosing another date the way Catering can.
-  if (cartRequiresWeekendEventDate(body.lines) && !isWeekendDate(dateStr)) {
+  const weekendItems = weekendOnlyItemNames(body.lines);
+  if (weekendItems.length > 0 && !isWeekendDate(dateStr)) {
     return NextResponse.json(
       {
         ok: false,
-        error: "This order includes an item only available Friday-Sunday - please come back then.",
+        error: `${unavailableItemsSentence(weekendItems, "Friday–Sunday")} Please come back then.`,
       },
       { status: 400 }
     );
   }
 
-  if (cartRequiresWeekdayOrderDate(body.lines) && isWeekendDate(dateStr)) {
+  const weekdayItems = weekdayOnlyItemNames(body.lines);
+  if (weekdayItems.length > 0 && isWeekendDate(dateStr)) {
     return NextResponse.json(
       {
         ok: false,
-        error: "This order includes an item only available Monday-Thursday - please come back then.",
+        error: `${unavailableItemsSentence(weekdayItems, "Monday–Thursday")} Please come back on a weekday.`,
       },
       { status: 400 }
     );

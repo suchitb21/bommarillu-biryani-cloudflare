@@ -13,6 +13,7 @@ import {
   todayInRestaurantTimeZone,
   CATERING_DELIVERY_FRIDAY_CUTOFF_LABEL,
 } from "@/lib/time-slots";
+import { unavailableItemsSentence } from "@/lib/cart/types";
 import type { CheckoutAddress, FulfillmentMethod } from "@/lib/checkout/types";
 import { computeSalesTaxCents, SALES_TAX_NAME, SALES_TAX_PERCENT } from "@/lib/checkout/tax";
 import {
@@ -42,8 +43,8 @@ function formatMoney(cents: number): string {
 
 export function CheckoutForm({
   showEventDate,
-  requiresWeekendEventDate = false,
-  requiresWeekdayOrderDate = false,
+  weekendOnlyItemNames = [],
+  weekdayOnlyItemNames = [],
   minLeadMinutes,
   deliveryHelpText,
   externalDeliveryHref,
@@ -54,13 +55,12 @@ export function CheckoutForm({
   /** Catering only - lets the customer pick a future event date instead of
    * always ordering for today. */
   showEventDate: boolean;
-  /** Catering only - true when the cart has a weekend-only item, restricting
-   * the event date to a Saturday/Sunday. */
-  requiresWeekendEventDate?: boolean;
-  /** Order Online only - true when the cart has an item not available
-   * Friday-Sunday, blocking checkout on a weekend day (there's no date picker,
-   * so the only fix is coming back on a weekday). */
-  requiresWeekdayOrderDate?: boolean;
+  /** Names of cart items only available Friday-Sunday - they restrict the
+   * event date (Catering) or block checkout on a weekday (Order Online). */
+  weekendOnlyItemNames?: string[];
+  /** Names of cart items only available Monday-Thursday - they block
+   * Order Online checkout on a weekend day (no date picker to route around it). */
+  weekdayOnlyItemNames?: string[];
   minLeadMinutes: number;
   /** Shown under the method toggle when in-form delivery is available
    * (catering: delivery is staff-arranged). Ignored when
@@ -81,6 +81,8 @@ export function CheckoutForm({
   totalCents: number;
   onSubmit: (values: CheckoutFormValues) => Promise<void>;
 }) {
+  const requiresWeekendEventDate = weekendOnlyItemNames.length > 0;
+  const requiresWeekdayOrderDate = weekdayOnlyItemNames.length > 0;
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [fulfillmentMethod, setFulfillmentMethod] = useState<FulfillmentMethod>("pickup");
@@ -183,13 +185,15 @@ export function CheckoutForm({
     if (!phone.trim()) return setError("Please enter a phone number.");
     if (requiresWeekendEventDate && !isWeekendDate(dateForSlots)) {
       return setError(
-        showEventDate
-          ? "Your order includes an item only available Friday-Sunday - please choose one of those event dates."
-          : "Your order includes an item only available Friday-Sunday - please come back then."
+        `${unavailableItemsSentence(weekendOnlyItemNames, "Friday–Sunday")} ${
+          showEventDate ? "Please choose one of those event dates." : "Please come back then."
+        }`
       );
     }
     if (requiresWeekdayOrderDate && isWeekendDate(dateForSlots)) {
-      return setError("Your order includes an item only available Monday-Thursday - please come back then.");
+      return setError(
+        `${unavailableItemsSentence(weekdayOnlyItemNames, "Monday–Thursday")} Please come back on a weekday.`
+      );
     }
     if (!selectedTimeSlot) return setError("Please choose a time.");
     if (effectiveFulfillmentMethod === "delivery" && !selectedDeliveryTier) {
@@ -431,8 +435,8 @@ export function CheckoutForm({
           />
           {requiresWeekendEventDate ? (
             <p className="checkout-help">
-              Your order includes an item only available Friday-Sunday &mdash; please choose
-              one of those dates.
+              {unavailableItemsSentence(weekendOnlyItemNames, "Friday–Sunday")} Please choose one
+              of those dates.
             </p>
           ) : null}
         </div>
@@ -467,7 +471,7 @@ export function CheckoutForm({
       ) : blockedByWeekendOnlyToday ? (
         <div className="checkout-closed">
           <p className="checkout-closed-title">
-            Your order includes an item only available Friday-Sunday.
+            {unavailableItemsSentence(weekendOnlyItemNames, "Friday–Sunday")}
           </p>
           <p className="checkout-closed-sub">
             Please come back then, or remove that item to order the rest today.
@@ -476,7 +480,7 @@ export function CheckoutForm({
       ) : blockedByWeekdayOnlyToday ? (
         <div className="checkout-closed">
           <p className="checkout-closed-title">
-            Your order includes an item only available Monday-Thursday.
+            {unavailableItemsSentence(weekdayOnlyItemNames, "Monday–Thursday")}
           </p>
           <p className="checkout-closed-sub">
             Please come back on a weekday, or remove that item to order the rest today.

@@ -7,7 +7,7 @@ import {
   isWeekendDate,
   zonedDateTimeToUtc,
 } from "@/lib/time-slots";
-import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
+import { unavailableItemsSentence, weekendOnlyItemNames } from "@/lib/cart/types";
 import { getCateringDeliveryTier } from "@/lib/checkout/delivery-fee";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
@@ -75,11 +75,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
   }
 
   // Defense in depth: don't trust the client's weekend-only gating alone.
-  if (cartRequiresWeekendEventDate(body.lines) && !isWeekendDate(body.eventDate)) {
+  const weekendItems = weekendOnlyItemNames(body.lines);
+  if (weekendItems.length > 0 && !isWeekendDate(body.eventDate)) {
     return NextResponse.json(
       {
         ok: false,
-        error: "This order includes an item only available Friday-Sunday - please choose one of those event dates.",
+        error: `${unavailableItemsSentence(weekendItems, "Friday–Sunday")} Please choose one of those event dates.`,
       },
       { status: 400 }
     );

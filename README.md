@@ -60,7 +60,7 @@ redeploy after changing any of them.
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `SQUARE_PORTAL_SOURCE_NAME` | `Biryani Catering` | The Square *application* name our orders carry. See [Identifying our orders](#identifying-our-orders). |
+| `SQUARE_PORTAL_SOURCE_NAME` | `Biryani Catering,BOMMARILLU BIRYANI  425-420-0160` | The Square *application* name(s) our orders carry, comma-separated. Keep every past name in the list. See [Identifying our orders](#identifying-our-orders). |
 | `ADMIN_ORDER_LOOKBACK_DAYS` | `365` | How far back the dashboard scans, capped at 365 |
 
 > **Careful with `$` in `.env` files.** Next.js expands `$NAME` references when
@@ -78,6 +78,9 @@ redeploy after changing any of them.
 
 **Admin** — `/admin` (hub), `/admin/orders`, `/admin/catering`,
 `/admin/messages`, `/admin/newsletters`, `/admin/login`
+
+**Redirects** (`next.config.ts`) — `/home` → `/` (permanent). The old
+Square-hosted site used `/home`; the redirect transfers its search listing.
 
 ## Identifying our orders
 
@@ -205,6 +208,80 @@ and it had drifted on five of seven days — advertising a 3–4 PM break on day
 the kitchen stayed open, and closing times up to 45 minutes earlier than the
 timetable allowed. Editing `WEEKLY_OPEN_WINDOWS` now updates every surface at
 once.
+
+## Day-based availability
+
+Some menu groups only apply on certain days. These are matched by Square
+category name (case-insensitive), in `src/lib/square/config.ts`:
+
+- `WEEKEND_ONLY_CATEGORY_NAMES` — Friday–Sunday only (e.g. `WEEKEND BIRYANI`).
+- `WEEKDAY_ONLY_CATEGORY_NAMES` — Monday–Thursday only: `Chinese Fast Food (week days only)`.
+
+The name must match the Square category exactly, including punctuation. A
+renamed category silently stops being restricted.
+
+What each place does:
+
+- **Order Online menu** (`src/components/menu-sections.tsx`) hides groups that
+  don't apply to today's Pacific date. Groups stay in the menu data, so the
+  cache is unaffected.
+- **Order Online checkout** (`src/components/checkout-form.tsx` and
+  `src/app/api/checkout/order-online/route.ts`) blocks the order if it contains
+  a weekday-only item on a weekend, or a weekend-only item on a weekday. The
+  message names the items. Order Online has no date picker, so the customer
+  has to come back another day or remove the item.
+- **Catering checkout** keeps weekend-only items restricted to a Friday–Sunday
+  event date, and names the items in the date note. Weekday-only items are
+  not restricted in Catering yet.
+
+Hiding a group in Square's dashboard does **not** apply these rules to the
+custom site. See the Delivery section for what Square's own storefront does.
+
+## Catering delivery rules
+
+Catering delivery is staff-arranged. The rules are judged against the **event
+date and time**, not when the order is placed, and are enforced in the form
+and again on the server (`src/lib/time-slots.ts`):
+
+- **Monday–Friday only.** Saturday and Sunday event dates cannot use delivery.
+- **Friday deliveries end at 4:00 PM Pacific.** Friday event times after that
+  are removed from the time list when delivery is selected.
+- The Delivery button is greyed out on Saturday and Sunday, with a note that
+  explains the rule.
+
+The distance band is written to the Square order's metadata
+(`cateringDeliveryDistance`), and the delivery address and special instructions
+are stored in the order note. The admin catering page shows all three. Orders
+placed before this was captured have no distance on record.
+
+## Delivery (the Cash App ordering profile)
+
+The site does not fulfil Order Online delivery itself. Square's courier dispatch
+only runs on Square's own ordering pages, so delivery links go to the Square
+online ordering profile (`DELIVERY_ORDERING_URL` in `src/lib/delivery.ts`):
+
+    https://cash.app/$bommarilluindiancuis/delivery
+
+Square builds that page from the catalog. Manage it in the Square Dashboard
+under **Online → Ordering profile**:
+
+- **Ordering toggle** pauses or resumes orders. While paused, the delivery link
+  stops working.
+- **Cashtag** changes the URL. Changing it breaks the link in `delivery.ts`
+  until that file is updated.
+- **Delivery settings** (including On-Demand Delivery) live under the profile's
+  Settings.
+- **Menu visibility** for that page follows Square's Items → Site Categories
+  settings, not this site's day rules.
+
+## Link prefetching
+
+Next.js prefetches every `<Link>` as it scrolls into view, so a nav bar on
+every page creates a lot of requests that nobody clicks. The navbar, footer,
+and hero CTA therefore use `HoverPrefetchLink`
+(`src/components/hover-prefetch-link.tsx`), which prefetches only once the
+pointer is over the link. Use it for any new link in a global component. Plain `Link` is still
+fine for ordinary page content.
 
 ## Further reading
 

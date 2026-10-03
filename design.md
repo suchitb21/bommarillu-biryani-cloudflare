@@ -292,6 +292,31 @@ abandoned payments never redirect). The order is resolved two ways:
 The page then shows paid / confirming / not-found from the real order state
 (`netAmountDueMoney` + `tenders`), never assuming success from the URL.
 
+## Day-based availability: decisions
+
+**Why the Order Online menu hides groups in the browser.** The server-rendered
+menu is cached and shared by all visitors, so filtering it on the server would
+mean rendering per request. Hiding groups on the client costs nothing on the
+server. The trade-off is a brief flash of every group before hydration, which
+is accepted. The checkout checks still run if someone bypasses the hiding.
+
+**Why names, not a Square setting.** Square's category visibility is a plain
+on/off switch with no schedule (`online_visibility` on `CatalogCategory`).
+Matching category names in code gives day-based rules that apply to the custom
+site and its server routes. Catering applies only the weekend rule so far.
+
+**Why the distance is in metadata and the address is in the note.** Metadata is
+private to this app, has a 255-character limit per value, and is read back as a
+field rather than parsed from prose. The address and special instructions were
+already written into the note, so they stay there and are extracted by the
+prefixes the checkout writes. The note is capped at 500 characters, so a very
+long address combined with long instructions could be cut off.
+
+**Why the Mon–Thu/Fri–Sun check is re-run on the server.** A client-side
+restriction can be bypassed with a tampered request. Every date rule is
+therefore checked in both the form and the route, and the route's error names
+the blocking items.
+
 ## Not yet live-tested
 
 Everything up to (not including) the actual Square Order Checkout API call

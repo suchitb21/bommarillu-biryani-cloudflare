@@ -55,6 +55,9 @@ export type MenuItemView = {
 export type MenuSectionView = {
   id: string;
   name: string;
+  /** Which days this group can be ordered: Fri-Sun, Mon-Thu, or any day.
+   * Order Online hides groups that don't apply today. */
+  dayAvailability: "weekend" | "weekday" | "always";
   items: MenuItemView[];
 };
 
@@ -303,6 +306,11 @@ async function fetchMenuByName(menuName: string): Promise<MenuView> {
       // real CATEGORY object returned by the API has one.
       id: group.id!,
       name: group.categoryData?.name ?? "Untitled",
+      dayAvailability: weekendOnlyCategoryIds.has(group.id!)
+        ? "weekend"
+        : weekdayOnlyCategoryIds.has(group.id!)
+          ? "weekday"
+          : "always",
       items: groupItems,
     };
   });

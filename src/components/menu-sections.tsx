@@ -1,10 +1,11 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { MenuItemCard } from "./menu-item-card";
 import { MenuItemModal } from "./menu-item-modal";
 import type { MenuItemView, MenuSectionView } from "@/lib/square/menu";
 import type { CartSource } from "@/lib/cart/types";
+import { isWeekendDate, todayInRestaurantTimeZone } from "@/lib/time-slots";
 
 // Renders one category tab per Menu Group and only mounts the active
 // section's cards - with 150+ items across 12 groups, this keeps the first
@@ -17,7 +18,20 @@ export function MenuSections({
   sections: MenuSectionView[];
   source: CartSource;
 }) {
-  const visibleSections = sections.filter((section) => section.items.length > 0);
+  // Null until mounted, so server and first client render agree (both show
+  // every group). Order Online then hides groups that don't apply today.
+  const [isWeekendToday, setIsWeekendToday] = useState<boolean | null>(null);
+  useEffect(() => {
+    setIsWeekendToday(isWeekendDate(todayInRestaurantTimeZone()));
+  }, []);
+
+  const visibleSections = sections.filter((section) => {
+    if (section.items.length === 0) return false;
+    if (source !== "menu" || isWeekendToday === null) return true;
+    if (section.dayAvailability === "weekend") return isWeekendToday;
+    if (section.dayAvailability === "weekday") return !isWeekendToday;
+    return true;
+  });
   const [activeId, setActiveId] = useState(visibleSections[0]?.id);
   const activeSection = visibleSections.find((section) => section.id === activeId) ?? visibleSections[0];
 

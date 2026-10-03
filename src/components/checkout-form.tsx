@@ -43,6 +43,7 @@ function formatMoney(cents: number): string {
 export function CheckoutForm({
   showEventDate,
   requiresWeekendEventDate = false,
+  requiresWeekdayOrderDate = false,
   minLeadMinutes,
   deliveryHelpText,
   externalDeliveryHref,
@@ -56,6 +57,10 @@ export function CheckoutForm({
   /** Catering only - true when the cart has a weekend-only item, restricting
    * the event date to a Saturday/Sunday. */
   requiresWeekendEventDate?: boolean;
+  /** Order Online only - true when the cart has an item not available
+   * Friday-Sunday, blocking checkout on a weekend day (there's no date picker,
+   * so the only fix is coming back on a weekday). */
+  requiresWeekdayOrderDate?: boolean;
   minLeadMinutes: number;
   /** Shown under the method toggle when in-form delivery is available
    * (catering: delivery is staff-arranged). Ignored when
@@ -165,6 +170,11 @@ export function CheckoutForm({
   const blockedByWeekendOnlyToday =
     !showEventDate && requiresWeekendEventDate && !isWeekendDate(dateForSlots);
 
+  // The inverse: items not available Friday-Sunday block Order Online checkout
+  // on any weekend day, with no date picker to route around it.
+  const blockedByWeekdayOnlyToday =
+    !showEventDate && requiresWeekdayOrderDate && isWeekendDate(dateForSlots);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -177,6 +187,9 @@ export function CheckoutForm({
           ? "Your order includes an item only available Friday-Sunday - please choose one of those event dates."
           : "Your order includes an item only available Friday-Sunday - please come back then."
       );
+    }
+    if (requiresWeekdayOrderDate && isWeekendDate(dateForSlots)) {
+      return setError("Your order includes an item only available Monday-Thursday - please come back then.");
     }
     if (!selectedTimeSlot) return setError("Please choose a time.");
     if (effectiveFulfillmentMethod === "delivery" && !selectedDeliveryTier) {
@@ -458,6 +471,15 @@ export function CheckoutForm({
           </p>
           <p className="checkout-closed-sub">
             Please come back then, or remove that item to order the rest today.
+          </p>
+        </div>
+      ) : blockedByWeekdayOnlyToday ? (
+        <div className="checkout-closed">
+          <p className="checkout-closed-title">
+            Your order includes an item only available Monday-Thursday.
+          </p>
+          <p className="checkout-closed-sub">
+            Please come back on a weekday, or remove that item to order the rest today.
           </p>
         </div>
       ) : (

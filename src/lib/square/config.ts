@@ -19,6 +19,13 @@ export const WEEKEND_ONLY_CATEGORY_NAMES = [
   "WEEKENDS SPECIALS (FRI -SAT-SUN)",
 ];
 
+/**
+ * Names of Square menu groups that are NOT available Friday-Sunday (Order
+ * Online only - checkout blocks them when today is Fri/Sat/Sun). The inverse
+ * of WEEKEND_ONLY_CATEGORY_NAMES. Same name-based, case-insensitive matching.
+ */
+export const WEEKDAY_ONLY_CATEGORY_NAMES = ["Chinese Fast Food (week days only)"];
+
 // Both "Menu" and "Catering" share this cache tag/window since they're
 // fetched the same way and change on the same cadence (whenever someone
 // edits the Square catalog, which the restaurant said is infrequent).

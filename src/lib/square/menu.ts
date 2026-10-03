@@ -6,6 +6,7 @@ import { listAllCatalogObjects } from "./list-all-catalog-objects";
 import {
   SQUARE_MENU_CACHE_TAG,
   SQUARE_MENU_REVALIDATE_SECONDS,
+  WEEKDAY_ONLY_CATEGORY_NAMES,
   WEEKEND_ONLY_CATEGORY_NAMES,
 } from "./config";
 
@@ -46,6 +47,9 @@ export type MenuItemView = {
    * restricts ordering (Order Online's today, or Catering's event date) to
    * Friday-Sunday when a line like this is in the cart. */
   isWeekendOnly: boolean;
+  /** True when this item is in one of WEEKDAY_ONLY_CATEGORY_NAMES - Order
+   * Online checkout blocks it on Friday-Sunday. */
+  isWeekdayOnly: boolean;
 };
 
 export type MenuSectionView = {
@@ -156,7 +160,8 @@ function toMenuItemView(
   item: Square.CatalogObject.Item,
   imageUrlById: Map<string, string>,
   modifierListsById: Map<string, Square.CatalogObject.ModifierList>,
-  weekendOnlyCategoryIds: Set<string>
+  weekendOnlyCategoryIds: Set<string>,
+  weekdayOnlyCategoryIds: Set<string>
 ): MenuItemView {
   const firstImageId = item.itemData?.imageIds?.[0];
   const imageUrl = firstImageId ? imageUrlById.get(firstImageId) : undefined;
@@ -185,9 +190,9 @@ function toMenuItemView(
     .map((info) => toModifierGroupView(info, modifierListsById))
     .filter((group): group is ModifierGroupView => group !== null);
 
-  const isWeekendOnly = (item.itemData?.categories ?? []).some(
-    (ref) => ref.id != null && weekendOnlyCategoryIds.has(ref.id)
-  );
+  const itemCategoryIds = (item.itemData?.categories ?? [])
+    .map((ref) => ref.id)
+    .filter((id): id is string => id != null);
 
   return {
     id: item.id,
@@ -196,7 +201,8 @@ function toMenuItemView(
     imageUrl,
     variations,
     modifierGroups,
-    isWeekendOnly,
+    isWeekendOnly: itemCategoryIds.some((id) => weekendOnlyCategoryIds.has(id)),
+    isWeekdayOnly: itemCategoryIds.some((id) => weekdayOnlyCategoryIds.has(id)),
   };
 }
 
@@ -250,6 +256,14 @@ async function fetchMenuByName(menuName: string): Promise<MenuView> {
       .filter((id): id is string => id != null)
   );
 
+  const weekdayOnlyNames = new Set(WEEKDAY_ONLY_CATEGORY_NAMES.map((name) => name.toLowerCase()));
+  const weekdayOnlyCategoryIds = new Set(
+    categories
+      .filter((category) => weekdayOnlyNames.has((category.categoryData?.name ?? "").trim().toLowerCase()))
+      .map((category) => category.id)
+      .filter((id): id is string => id != null)
+  );
+
   const menu = categories.find(
     (category) =>
       category.categoryData?.categoryType === "MENU_CATEGORY" &&
@@ -279,7 +293,9 @@ async function fetchMenuByName(menuName: string): Promise<MenuView> {
       })
       .filter((entry): entry is { item: Square.CatalogObject.Item; ordinal: number } => entry !== null)
       .sort((a, b) => a.ordinal - b.ordinal)
-      .map(({ item }) => toMenuItemView(item, imageUrlById, modifierListsById, weekendOnlyCategoryIds));
+      .map(({ item }) =>
+        toMenuItemView(item, imageUrlById, modifierListsById, weekendOnlyCategoryIds, weekdayOnlyCategoryIds)
+      );
 
     return {
       // The SDK types `id` as optional on CatalogObjectCategory (it also

@@ -99,6 +99,7 @@ export function MenuItemModal({
       quantity,
       source,
       isWeekendOnly: item.isWeekendOnly,
+      isWeekdayOnly: item.isWeekdayOnly,
     });
     onClose();
   }

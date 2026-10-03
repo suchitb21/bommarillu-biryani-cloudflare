@@ -83,6 +83,7 @@ function createCartStore(storageKey: string, defaultSource: CartSource) {
               ...l,
               source: l.source ?? defaultSource,
               isWeekendOnly: l.isWeekendOnly ?? false,
+              isWeekdayOnly: l.isWeekdayOnly ?? false,
             })),
           });
         }

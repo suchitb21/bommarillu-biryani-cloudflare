@@ -40,6 +40,10 @@ export type CartLine = {
    * WEEKEND_ONLY_CATEGORY_NAMES) - checkout restricts ordering to
    * Friday-Sunday when any line has this set. */
   isWeekendOnly: boolean;
+  /** True when this item is not available Friday-Sunday (see
+   * WEEKDAY_ONLY_CATEGORY_NAMES) - Order Online checkout blocks the order
+   * when today is a weekend day. */
+  isWeekdayOnly: boolean;
 };
 
 export function buildLineId(
@@ -61,4 +65,10 @@ export function lineTotalCents(line: CartLine): number {
  * server-side (checkout API routes) so the two can't disagree. */
 export function cartRequiresWeekendEventDate(lines: CartLine[]): boolean {
   return lines.some((line) => line.isWeekendOnly);
+}
+
+/** True when any line is not available Friday-Sunday - Order Online's
+ * checkout must fall on a Monday-Thursday. */
+export function cartRequiresWeekdayOrderDate(lines: CartLine[]): boolean {
+  return lines.some((line) => line.isWeekdayOnly);
 }

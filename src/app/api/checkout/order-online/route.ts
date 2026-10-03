@@ -7,7 +7,7 @@ import {
   todayInRestaurantTimeZone,
   zonedDateTimeToUtc,
 } from "@/lib/time-slots";
-import { cartRequiresWeekendEventDate } from "@/lib/cart/types";
+import { cartRequiresWeekdayOrderDate, cartRequiresWeekendEventDate } from "@/lib/cart/types";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the /cart checkout form uses to build its slot list.
@@ -61,6 +61,16 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       {
         ok: false,
         error: "This order includes an item only available Friday-Sunday - please come back then.",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (cartRequiresWeekdayOrderDate(body.lines) && isWeekendDate(dateStr)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "This order includes an item only available Monday-Thursday - please come back then.",
       },
       { status: 400 }
     );

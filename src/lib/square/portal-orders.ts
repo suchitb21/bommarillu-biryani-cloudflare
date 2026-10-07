@@ -303,6 +303,129 @@ function toView(order: RawPortalOrder): AdminOrderView {
   };
 }
 
+export type CompletedOrdersPage = {
+  orders: AdminOrderView[];
+  /** createdAt cursor for the next-older page, or null when this is the last. */
+  olderCursor: string | null;
+  /** createdAt cursor for the next-newer page, or null when this is the first. */
+  newerCursor: string | null;
+};
+
+/** Orders asked of Square per request while filling one page. */
+const COMPLETED_BATCH = 200;
+
+function parseCursor(value: string | undefined): number {
+  return value ? Date.parse(value) : Number.NaN;
+}
+
+/**
+ * One page of completed Online Orders, newest first, fetched straight from
+ * Square instead of out of the full scan above.
+ *
+ * Square only pages by cursor (there is no "give me page 7"), so this uses
+ * keyset paging: the URL carries the createdAt of the order at the edge of the
+ * page ("older than X" / "newer than X"), Square is asked for orders on that
+ * side of it, and the walk stops as soon as pageSize + 1 matches are found
+ * (the extra one only answers "is there another page?"). The work per page is
+ * therefore constant - it does not grow with the total number of orders.
+ *
+ * Ordering is by when the order was placed, which for pickup orders tracks the
+ * pickup time closely; the card still shows the scheduled pickup time.
+ */
+export async function getCompletedOnlineOrdersPage(args: {
+  before?: string;
+  after?: string;
+  pageSize: number;
+}): Promise<CompletedOrdersPage> {
+  const { pageSize } = args;
+  const afterMs = parseCursor(args.after);
+  const beforeMs = parseCursor(args.before);
+  const goingNewer = Number.isFinite(afterMs);
+  const boundMs = goingNewer ? afterMs : beforeMs;
+
+  const client = getSquareClient();
+  const locationId = getSquareLocationId();
+  const lookbackStartMs =
+    Date.now() - getOrderLookbackDays() * 24 * 60 * 60 * 1000;
+
+  const createdAt: { startAt: string; endAt?: string } = {
+    startAt: new Date(
+      goingNewer ? Math.max(lookbackStartMs, afterMs) : lookbackStartMs
+    ).toISOString(),
+  };
+  if (!goingNewer && Number.isFinite(beforeMs)) {
+    createdAt.endAt = new Date(beforeMs).toISOString();
+  }
+
+  const baseRequest = {
+    locationIds: [locationId],
+    limit: COMPLETED_BATCH,
+    query: {
+      filter: {
+        dateTimeFilter: { createdAt },
+        sourceFilter: { sourceNames: getPortalSourceNames() },
+      },
+      sort: {
+        sortField: "CREATED_AT",
+        sortOrder: goingNewer ? "ASC" : "DESC",
+      },
+    },
+  } satisfies Square.SearchOrdersRequest;
+
+  const now = Date.now();
+  const matches: RawPortalOrder[] = [];
+  let cursor: string | undefined;
+  let pages = 0;
+
+  scan: do {
+    const response = await client.orders.search({ ...baseRequest, cursor });
+
+    for (const order of response.orders ?? []) {
+      if (order.state === "CANCELED") continue;
+      if (readChannel(order) !== "order-online") continue;
+      if (!isSettled(order)) continue;
+
+      const raw = toRawPortalOrder(order, "order-online");
+      // Still upcoming - that tab's job, not this one's.
+      if (raw.scheduledAtMs > now) continue;
+      // Strictly past the edge, whatever Square's endAt inclusivity is.
+      if (Number.isFinite(boundMs)) {
+        if (goingNewer ? raw.createdAtMs <= boundMs : raw.createdAtMs >= boundMs) {
+          continue;
+        }
+      }
+
+      matches.push(raw);
+      if (matches.length > pageSize) break scan;
+    }
+
+    cursor = response.cursor;
+    pages += 1;
+  } while (cursor && pages < MAX_PAGES);
+
+  const hasMore = matches.length > pageSize;
+
+  // Asked for "newer" but there are fewer than a page of them: we have walked
+  // back to the top, so show the true first page rather than a short one.
+  if (goingNewer && !hasMore) {
+    return getCompletedOnlineOrdersPage({ pageSize });
+  }
+
+  const pageRaw = matches.slice(0, pageSize);
+  if (goingNewer) pageRaw.reverse(); // fetched oldest-first; show newest-first
+
+  const first = pageRaw[0];
+  const last = pageRaw[pageRaw.length - 1];
+  const hasOlder = goingNewer ? true : hasMore;
+  const hasNewer = goingNewer ? hasMore : Number.isFinite(beforeMs);
+
+  return {
+    orders: pageRaw.map(toView),
+    olderCursor: hasOlder && last ? new Date(last.createdAtMs).toISOString() : null,
+    newerCursor: hasNewer && first ? new Date(first.createdAtMs).toISOString() : null,
+  };
+}
+
 /**
  * Returns one portal flow's orders, split by whether the event/pickup time has
  * passed. The split is a plain instant comparison - "Pacific" only governs how

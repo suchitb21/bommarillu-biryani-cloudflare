@@ -1,57 +1,82 @@
-"use client";
-
-import { useState } from "react";
+import Link from "next/link";
 import type { AdminOrderView } from "@/lib/admin/types";
 
-type AdminOrderTabsProps = {
-  upcoming: AdminOrderView[];
-  completed: AdminOrderView[];
-  upcomingEmpty: string;
-  completedEmpty: string;
-};
-
-type TabKey = "upcoming" | "completed";
+export type OrderTabKey = "upcoming" | "completed";
 
 /**
- * Purely presentational: both lists arrive pre-split and pre-formatted from a
- * server component, so toggling a tab never re-derives a date and can never
- * disagree with the server-rendered markup.
+ * "numbered": the server holds the whole list and slices it (Upcoming, and all
+ * of Catering), so it knows the total and can offer Page X of Y.
+ * "cursor": the server fetched just one page from Square (Online Completed),
+ * so the total is unknown and it can only step to the newer/older neighbour.
+ */
+export type OrderPagination =
+  | { mode: "numbered"; page: number; pageSize: number; total: number }
+  | {
+      mode: "cursor";
+      pageNumber: number;
+      newerHref: string | null;
+      olderHref: string | null;
+    };
+
+type AdminOrderTabsProps = {
+  basePath: string;
+  tab: OrderTabKey;
+  /** Orders for the current page only - the server slices before sending. */
+  orders: AdminOrderView[];
+  /** null when this view did not have to count them (see cursor mode). */
+  upcomingCount: number | null;
+  completedCount: number | null;
+  pagination: OrderPagination;
+  emptyMessage: string;
+};
+
+function hrefFor(basePath: string, tab: OrderTabKey, page: number): string {
+  const params = new URLSearchParams();
+  if (tab !== "upcoming") params.set("tab", tab);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `${basePath}?${query}` : basePath;
+}
+
+/**
+ * Server-rendered: the tab and page live in the URL (?tab=completed&page=2),
+ * so only one page of orders is ever sent to the browser, and a refresh or a
+ * bookmark lands on the same view. The lists arrive pre-sorted by date and
+ * pre-formatted, so paging never re-derives a date.
  */
 export function AdminOrderTabs({
-  upcoming,
-  completed,
-  upcomingEmpty,
-  completedEmpty,
+  basePath,
+  tab,
+  orders,
+  upcomingCount,
+  completedCount,
+  pagination,
+  emptyMessage,
 }: AdminOrderTabsProps) {
-  const [tab, setTab] = useState<TabKey>("upcoming");
-
-  const orders = tab === "upcoming" ? upcoming : completed;
-  const emptyMessage = tab === "upcoming" ? upcomingEmpty : completedEmpty;
-
   return (
     <div>
-      <div className="admin-tabs" role="tablist" aria-label="Order status">
-        <button
+      <nav className="admin-tabs" aria-label="Order status">
+        <Link
           className="admin-tab"
-          type="button"
-          role="tab"
-          aria-selected={tab === "upcoming"}
-          onClick={() => setTab("upcoming")}
+          href={hrefFor(basePath, "upcoming", 1)}
+          aria-current={tab === "upcoming" ? "page" : undefined}
         >
           Upcoming Orders
-          <span className="admin-tab-count">{upcoming.length}</span>
-        </button>
-        <button
+          {upcomingCount !== null && (
+            <span className="admin-tab-count">{upcomingCount}</span>
+          )}
+        </Link>
+        <Link
           className="admin-tab"
-          type="button"
-          role="tab"
-          aria-selected={tab === "completed"}
-          onClick={() => setTab("completed")}
+          href={hrefFor(basePath, "completed", 1)}
+          aria-current={tab === "completed" ? "page" : undefined}
         >
           Completed Orders
-          <span className="admin-tab-count">{completed.length}</span>
-        </button>
-      </div>
+          {completedCount !== null && (
+            <span className="admin-tab-count">{completedCount}</span>
+          )}
+        </Link>
+      </nav>
 
       {orders.length === 0 ? (
         <p className="admin-empty">{emptyMessage}</p>
@@ -62,7 +87,68 @@ export function AdminOrderTabs({
           ))}
         </div>
       )}
+
+      <Pager basePath={basePath} tab={tab} pagination={pagination} />
     </div>
+  );
+}
+
+function Pager({
+  basePath,
+  tab,
+  pagination,
+}: {
+  basePath: string;
+  tab: OrderTabKey;
+  pagination: OrderPagination;
+}) {
+  let prevHref: string | null;
+  let nextHref: string | null;
+  let label: string;
+  let range: string | null = null;
+
+  if (pagination.mode === "numbered") {
+    const { page, pageSize, total } = pagination;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (totalPages <= 1) return null;
+
+    prevHref = page > 1 ? hrefFor(basePath, tab, page - 1) : null;
+    nextHref = page < totalPages ? hrefFor(basePath, tab, page + 1) : null;
+    label = `Page ${page} of ${totalPages}`;
+    range = `Orders ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total}`;
+  } else {
+    prevHref = pagination.newerHref;
+    nextHref = pagination.olderHref;
+    if (!prevHref && !nextHref) return null;
+    label = `Page ${pagination.pageNumber}`;
+    range = pagination.pageNumber === 1 ? "Newest orders" : null;
+  }
+
+  return (
+    <nav className="admin-pagination" aria-label="Pagination">
+      {prevHref ? (
+        <Link className="admin-page-btn" href={prevHref} rel="prev">
+          &larr; {pagination.mode === "cursor" ? "Newer" : "Previous"}
+        </Link>
+      ) : (
+        <span className="admin-page-btn admin-page-btn--disabled">
+          &larr; {pagination.mode === "cursor" ? "Newer" : "Previous"}
+        </span>
+      )}
+      <span className="admin-page-info">
+        {label}
+        {range && <span className="admin-page-range">{range}</span>}
+      </span>
+      {nextHref ? (
+        <Link className="admin-page-btn" href={nextHref} rel="next">
+          {pagination.mode === "cursor" ? "Older" : "Next"} &rarr;
+        </Link>
+      ) : (
+        <span className="admin-page-btn admin-page-btn--disabled">
+          {pagination.mode === "cursor" ? "Older" : "Next"} &rarr;
+        </span>
+      )}
+    </nav>
   );
 }
 

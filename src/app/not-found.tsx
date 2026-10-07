@@ -10,6 +10,9 @@ import "./system-pages.css";
 export const metadata: Metadata = {
   title: "Page not found",
   robots: { index: false, follow: false },
+  // Don't inherit the root layout's canonical ("/"): a 404 must not claim to
+  // be a duplicate of the home page.
+  alternates: { canonical: null },
 };
 
 export default function NotFound() {

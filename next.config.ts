@@ -51,6 +51,26 @@ const nextConfig: NextConfig = {
       // at /. A 301 here tells Google to transfer that old listing's SEO
       // value to / instead of leaving it pointing at a dead page.
       { source: "/home", destination: "/", permanent: true },
+
+      // Old Square-site URLs that Google still has indexed or queued. They
+      // used to 404 (and carry noindex), which threw away their ranking and
+      // burned crawl budget before Google reached /order-online. Dish pages
+      // have no equivalent here, so the menu is the closest destination.
+      { source: "/product/:path*", destination: "/order-online", permanent: true },
+      { source: "/s/order", destination: "/order-online", permanent: true },
+      // Square item deep links on the home page: /?item=3, /?si=true&item=13
+      {
+        source: "/",
+        has: [{ type: "query", key: "item" }],
+        destination: "/order-online",
+        permanent: true,
+      },
+      {
+        source: "/",
+        has: [{ type: "query", key: "si" }],
+        destination: "/order-online",
+        permanent: true,
+      },
     ];
   },
 };

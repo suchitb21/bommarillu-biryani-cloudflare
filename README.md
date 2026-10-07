@@ -79,8 +79,19 @@ redeploy after changing any of them.
 **Admin** — `/admin` (hub), `/admin/orders`, `/admin/catering`,
 `/admin/messages`, `/admin/newsletters`, `/admin/login`
 
-**Redirects** (`next.config.ts`) — `/home` → `/` (permanent). The old
-Square-hosted site used `/home`; the redirect transfers its search listing.
+**Redirects** (`next.config.ts`, all permanent) — the old Square-hosted site's
+URLs are redirected so its search listings transfer instead of 404ing:
+
+| Old URL | Goes to |
+| --- | --- |
+| `/home` | `/` |
+| `/product/*` (old dish pages) | `/order-online` |
+| `/s/order` | `/order-online` |
+| `/?item=…`, `/?si=…` (Square item deep links) | `/order-online` |
+
+Dish pages have no equivalent here, so the menu is the closest destination.
+The 404 page is `noindex` and declares no canonical (it must not claim to
+duplicate `/`).
 
 ## Identifying our orders
 
@@ -138,6 +149,27 @@ fulfillment, and customer filters.
   client pre-formatted, so the browser never re-derives a date and hydration
   cannot disagree with the server.
 - Results are cached in-process for 60 seconds.
+
+### Pagination (25 per page)
+
+The tab and page live in the URL, so a refresh or bookmark lands on the same
+view, and only one page of orders is sent to the browser.
+
+| View | How it pages | Cost |
+| --- | --- | --- |
+| Online → **Upcoming**, and all of **Catering** | Numbered (`?tab=…&page=N`). The server scans every order (cached 60 s), sorts, and slices 25. Shows "Page X of Y" and tab counts. | Grows with total orders |
+| Online → **Completed** | Cursor-based (`?tab=completed&before=<createdAt>` / `&after=<createdAt>`, plus a display-only `&p=N`). Asks Square for just the 25 needed, newest first, and stops. Shows **← Newer / Older →**. | Constant per page |
+
+Square can only page by cursor, so the completed list cannot jump to "page 7"
+or show a total; the tab badge is omitted where the count isn't known. It
+orders by when the order was *placed* (pickup orders track pickup time
+closely), and ignores whether Square's `endAt` is inclusive by filtering
+strictly past the cursor in code. See `getCompletedOnlineOrdersPage` in
+`src/lib/square/portal-orders.ts`.
+
+The Upcoming tab still does the full scan. At a few thousand orders it will be
+the slow view; bounding it to recent orders is the next step, but needs the
+maximum pickup scheduling horizon confirmed first.
 
 > **If the Square application is ever renamed** in the Square Developer Portal,
 > `source.name` changes, the allowlist matches nothing, and both order pages go

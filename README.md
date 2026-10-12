@@ -77,7 +77,7 @@ redeploy after changing any of them.
 `/api/square/health`, `/api/admin/login`, `/api/admin/logout`
 
 **Admin** — `/admin` (hub), `/admin/orders`, `/admin/catering`,
-`/admin/messages`, `/admin/newsletters`, `/admin/login`
+`/admin/sold-out`, `/admin/messages`, `/admin/newsletters`, `/admin/login`
 
 **Redirects** (`next.config.ts`, all permanent) — the old Square-hosted site's
 URLs are redirected so its search listings transfer instead of 404ing:
@@ -166,6 +166,27 @@ orders by when the order was *placed* (pickup orders track pickup time
 closely), and ignores whether Square's `endAt` is inclusive by filtering
 strictly past the cursor in code. See `getCompletedOnlineOrdersPage` in
 `src/lib/square/portal-orders.ts`.
+
+### Sold-out items
+
+`/admin/sold-out` lets staff mark a menu **group** or **item** sold out, per menu
+(Menu / Catering), either *today only* (clears at midnight Pacific) or *until
+restored*. State lives in the Neon table `sold_out_items` (created on first
+use); Square's own sold-out flag is read-only to apps, so it cannot be used.
+
+- Public pages (`/order-online`, `/catering`) grey sold-out items with a badge and
+  block add-to-cart; a sold-out group shows a "Currently sold out" banner. Both
+  pages render per request (`dynamic = "force-dynamic"`); the Square menu is still
+  cached for an hour.
+- Both checkout endpoints reject sold-out items server-side with a 400 naming them.
+- The raw list is cached for 30 s and busted instantly by the admin actions;
+  expiry is always checked against the real clock, so "today" ends exactly at
+  Pacific midnight.
+- **Fails open:** if the database can't be read, the menu renders and orders go
+  through (logged with `[sold-out]`).
+- A group covers all its items. An item in two groups is only blocked at
+  checkout when sold out in every group it appears in.
+- Logic is pure and tested: `npm test` (Node's built-in runner, `tests/`).
 
 The Upcoming tab still does the full scan. At a few thousand orders it will be
 the slow view; bounding it to recent orders is the next step, but needs the

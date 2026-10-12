@@ -121,9 +121,16 @@ export function MenuSections({
 
       <div className="menu-section">
         <h2>{activeSection.name}</h2>
+        {activeSection.soldOut ? (
+          <p className="menu-section-soldout">Currently sold out</p>
+        ) : null}
         <div className="menu-section-grid">
           {activeSection.items.map((item) => (
-            <MenuItemCard item={item} key={item.id} onClick={() => setOpenItem(item)} />
+            <MenuItemCard
+              item={item}
+              key={item.id}
+              onClick={item.soldOut ? undefined : () => setOpenItem(item)}
+            />
           ))}
         </div>
       </div>

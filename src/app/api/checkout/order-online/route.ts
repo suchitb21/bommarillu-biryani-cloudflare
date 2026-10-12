@@ -8,10 +8,13 @@ import {
   zonedDateTimeToUtc,
 } from "@/lib/time-slots";
 import {
+  soldOutMessage,
   unavailableItemsSentence,
   weekdayOnlyItemNames,
   weekendOnlyItemNames,
 } from "@/lib/cart/types";
+import { SQUARE_MENU_NAMES } from "@/lib/square/config";
+import { findSoldOutItemNames } from "@/lib/sold-out/checkout";
 import type { OrderOnlineCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
 // Matches the lead time the /cart checkout form uses to build its slot list.
@@ -113,6 +116,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       { ok: false, error: "That time has passed - please choose a later time." },
       { status: 400 }
     );
+  }
+
+  const soldOutNames = await findSoldOutItemNames(SQUARE_MENU_NAMES.onlineOrdering, body.lines);
+  if (soldOutNames.length > 0) {
+    return NextResponse.json({ ok: false, error: soldOutMessage(soldOutNames) }, { status: 400 });
   }
 
   try {

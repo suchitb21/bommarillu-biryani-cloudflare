@@ -85,3 +85,9 @@ export function unavailableItemsSentence(names: string[], days: string): string 
   const verb = names.length > 1 ? "are" : "is";
   return `${joinItemNames(names)} ${verb} only available ${days}.`;
 }
+
+/** e.g. "Veggie Noodles is sold out right now. Please remove it from your cart to continue." */
+export function soldOutMessage(names: string[]): string {
+  const plural = names.length > 1;
+  return `${joinItemNames(names)} ${plural ? "are" : "is"} sold out right now. Please remove ${plural ? "them" : "it"} from your cart to continue.`;
+}

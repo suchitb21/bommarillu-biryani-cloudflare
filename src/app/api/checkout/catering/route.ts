@@ -7,7 +7,9 @@ import {
   isWeekendDate,
   zonedDateTimeToUtc,
 } from "@/lib/time-slots";
-import { unavailableItemsSentence, weekendOnlyItemNames } from "@/lib/cart/types";
+import { soldOutMessage, unavailableItemsSentence, weekendOnlyItemNames } from "@/lib/cart/types";
+import { SQUARE_MENU_NAMES } from "@/lib/square/config";
+import { findSoldOutItemNames } from "@/lib/sold-out/checkout";
 import { getCateringDeliveryTier } from "@/lib/checkout/delivery-fee";
 import type { CateringCheckoutRequest, CheckoutResponse } from "@/lib/checkout/types";
 
@@ -103,6 +105,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckoutR
       { ok: false, error: "Catering orders need at least 2 hours' notice - please choose a later time." },
       { status: 400 }
     );
+  }
+
+  const soldOutNames = await findSoldOutItemNames(SQUARE_MENU_NAMES.catering, body.lines);
+  if (soldOutNames.length > 0) {
+    return NextResponse.json({ ok: false, error: soldOutMessage(soldOutNames) }, { status: 400 });
   }
 
   try {

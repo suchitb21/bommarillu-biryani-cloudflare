@@ -17,7 +17,14 @@ export function MenuItemCard({
 
   return (
     <article
-      className={clickable ? "menu-item-card menu-item-card--clickable" : "menu-item-card"}
+      className={[
+        "menu-item-card",
+        clickable ? "menu-item-card--clickable" : "",
+        item.soldOut ? "menu-item-card--soldout" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-disabled={item.soldOut || undefined}
       role={clickable ? "button" : undefined}
       tabIndex={clickable ? 0 : undefined}
       onClick={onClick}
@@ -45,6 +52,7 @@ export function MenuItemCard({
       ) : null}
 
       <div className="menu-item-card-body">
+        {item.soldOut ? <span className="menu-item-card-soldout-badge">Sold out</span> : null}
         <h3 className="menu-item-card-name">{item.name}</h3>
         {item.description ? <p className="menu-item-card-desc">{item.description}</p> : null}
 

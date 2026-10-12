@@ -50,6 +50,9 @@ export type MenuItemView = {
   /** True when this item is in one of WEEKDAY_ONLY_CATEGORY_NAMES - Order
    * Online checkout blocks it on Friday-Sunday. */
   isWeekdayOnly: boolean;
+  /** Set per request by applySoldOut (src/lib/sold-out/logic.ts); always
+   * false on the cached Square menu itself. */
+  soldOut: boolean;
 };
 
 export type MenuSectionView = {
@@ -59,6 +62,8 @@ export type MenuSectionView = {
    * Order Online hides groups that don't apply today. */
   dayAvailability: "weekend" | "weekday" | "always";
   items: MenuItemView[];
+  /** True when the whole group is marked sold out. Set by applySoldOut. */
+  soldOut: boolean;
 };
 
 export type MenuView = {
@@ -206,6 +211,7 @@ function toMenuItemView(
     modifierGroups,
     isWeekendOnly: itemCategoryIds.some((id) => weekendOnlyCategoryIds.has(id)),
     isWeekdayOnly: itemCategoryIds.some((id) => weekdayOnlyCategoryIds.has(id)),
+    soldOut: false,
   };
 }
 
@@ -312,6 +318,7 @@ async function fetchMenuByName(menuName: string): Promise<MenuView> {
           ? "weekday"
           : "always",
       items: groupItems,
+      soldOut: false,
     };
   });
 

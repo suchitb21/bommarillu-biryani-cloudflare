@@ -2,6 +2,8 @@ import "./menu-page.css";
 import { MenuSections } from "./menu-sections";
 import { getMenuByName } from "@/lib/square/menu";
 import type { CartSource } from "@/lib/cart/types";
+import { applySoldOut } from "@/lib/sold-out/logic";
+import { getActiveSoldOut } from "@/lib/sold-out/read";
 
 // Shared between /order-online (the "Menu" Menu) and /catering (the
 // "Catering" Menu) - only the menu name and header copy differ.
@@ -18,9 +20,9 @@ export async function MenuPage({
   source: CartSource;
   children?: React.ReactNode;
 }) {
-  let menu;
+  let baseMenu;
   try {
-    menu = await getMenuByName(menuName);
+    baseMenu = await getMenuByName(menuName);
   } catch (error) {
     return (
       <section className="menu-page">
@@ -38,6 +40,8 @@ export async function MenuPage({
       </section>
     );
   }
+
+  const menu = applySoldOut(baseMenu, await getActiveSoldOut());
 
   return (
     <section className="menu-page">

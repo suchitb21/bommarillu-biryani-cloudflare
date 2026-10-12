@@ -14,6 +14,12 @@ const OPTIONS = [
       "Catering orders booked through the catering page, with event dates.",
   },
   {
+    href: "/admin/sold-out",
+    title: "Sold Out",
+    description:
+      "Mark a menu group or item as sold out so customers can't order it.",
+  },
+  {
     href: "/admin/messages",
     title: "Contact Us",
     description: "Messages customers sent through the contact form.",

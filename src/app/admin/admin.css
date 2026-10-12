@@ -490,3 +490,89 @@
   color: var(--brown-soft, #6b5648);
   white-space: nowrap;
 }
+
+/* ---------- Sold out ---------- */
+
+.admin-soldout-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.admin-soldout-group {
+  background: var(--cream, #fbf3e3);
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+}
+
+.admin-soldout-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+}
+
+.admin-soldout-row--group {
+  padding-top: 0;
+}
+
+.admin-soldout-items {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  border-top: 1px solid rgba(59, 36, 23, 0.12);
+}
+
+.admin-soldout-items .admin-soldout-row {
+  border-bottom: 1px solid rgba(59, 36, 23, 0.08);
+}
+
+.admin-soldout-group summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--brown-soft, #6b5648);
+}
+
+.admin-soldout-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-soldout-btn {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--brown, #3b2417);
+  background: var(--brown, #3b2417);
+  color: #fff;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+}
+
+.admin-soldout-btn--ghost {
+  background: transparent;
+  color: var(--brown, #3b2417);
+}
+
+.admin-soldout-btn--restore {
+  background: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.admin-soldout-chip {
+  margin-left: 0.6rem;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  background: #b3261e;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.admin-soldout-note {
+  font-size: 0.82rem;
+  color: var(--brown-soft, #6b5648);
+}

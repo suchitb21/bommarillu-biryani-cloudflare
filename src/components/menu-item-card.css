@@ -103,3 +103,30 @@
   color: var(--brown-soft);
   font-style: italic;
 }
+
+.menu-item-card--soldout {
+  opacity: 0.55;
+  filter: grayscale(0.7);
+}
+
+.menu-item-card-soldout-badge {
+  align-self: flex-start;
+  margin-bottom: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #3b2417;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.menu-section-soldout {
+  margin: 0 0 1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  background: rgba(59, 36, 23, 0.08);
+  color: #3b2417;
+  font-weight: 500;
+}

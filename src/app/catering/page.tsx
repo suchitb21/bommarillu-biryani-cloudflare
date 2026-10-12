@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   alternates: { canonical: "/catering" },
 };
 
+// Sold-out state changes during the day; render per request. The Square menu
+// itself is still cached for an hour (src/lib/square/menu.ts) and the sold-out
+// list for 30 s (src/lib/sold-out/read.ts), so this stays cheap.
+export const dynamic = "force-dynamic";
+
 export default function CateringPage() {
   return (
     <>
